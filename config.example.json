@@ -1,0 +1,10 @@
+{
+  "scraperExportsPath": "./exports",
+  "defaultCountryCode": "91",
+  "minDelaySeconds": 25,
+  "maxDelaySeconds": 50,
+  "defaultBatchLimit": 20,
+  "onlyWithoutWebsite": true,
+  "senderName": "YourName",
+  "testPhoneNumber": ""
+}
