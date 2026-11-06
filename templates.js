@@ -1,68 +1,95 @@
 /**
- * WhatsApp Outreach Templates - Web Development Pitch
- * Specifically designed for businesses & property dealers who do NOT have a website.
+ * WhatsApp Outreach Templates - Conversational & Non-Salesy
+ * Crafted specifically for real estate consultants & property dealers.
+ * 
+ * Key Principles:
+ *  1. Short (under 4-5 lines) - Easy to read on a phone screen.
+ *  2. Conversational & Humble - Does NOT sound like an agency sales pitch.
+ *  3. Curious Question Hook - High reply rate ("Do you have a link or share on WhatsApp?").
+ *  4. Low-Friction Ask - "Can I share a 1-minute demo link?"
  * 
  * Available Placeholders:
- *   {name}        - Business / Dealer Name
+ *   {name}        - Clean Business / Dealer Name
  *   {address}     - Locality / City
  *   {category}    - Category (e.g. Real estate consultant)
- *   {senderName}  - Your Name / Agency Signature
+ *   {senderName}  - Your Name / Signature
  */
 
 const templates = [
-  // Variation 1: Value & Local Google Presence Focus
+  // Variation 1: Natural Hinglish (Highest reply rate in India - Friendly inquiry)
+  `Namaste {name} ji,
+
+Main {address} me aapka profile dekh raha tha.
+Aapke paas available properties dekhne ke liye koi website link hai, ya fir aap inventory direct WhatsApp par hi share karte hain?
+
+Actually humne property consultants ke liye ek simple 1-click WhatsApp showcase demo banaya hai. Agar aap kahen to 1 minute ka preview link share karun?
+
+- {senderName}`,
+
+  // Variation 2: Clean, Casual English (Curious & Natural)
   `Hi {name},
 
-I came across your profile in {address} and was impressed by your presence in the local market.
+Came across your real estate business in {address}.
 
-I noticed that you don't currently have an official website listed for {name}. Nowadays, most property buyers and investors search Google before calling, and without a website, high-value inquiries often get lost to competitors.
+Quick question — do you have a website link to view your active properties, or do you share listings directly on WhatsApp?
 
-We build modern, fast websites specifically for property consultants — featuring:
-✅ Property & Plot listing showcase
-✅ 1-Click direct WhatsApp lead buttons
-✅ Google Search & Maps integration
+I recently designed a simple mobile portfolio demo tailored for property consultants (with direct WhatsApp inquiry buttons). 
 
-Would you be open to seeing a quick, free sample design we can put together for {name}?
+Would you be open to checking out a quick 1-minute demo link?
 
-Best regards,
+Best,
 {senderName}`,
 
-  // Variation 2: Direct Leads & Independence from Paid Portals
-  `Hello {name},
+  // Variation 3: Short Helpful Observation (Hinglish/English mix)
+  `Hello {name} ji,
 
-Greetings! I noticed your business in {address}.
+I was looking up your property business in {address} on Google, but noticed you don't have an official website link attached.
 
-Are you currently relying mostly on paid portals (like 99acres/MagicBricks) or offline walk-ins for leads?
+We put together a clean 1-page mobile showcase demo made for property dealers so buyers can browse your hot listings and WhatsApp you directly.
 
-Having your own branded website for {name} helps you:
-1. Capture direct buyer inquiries straight to your WhatsApp (0% commission)
-2. Build trust with serious clients & NRI investors
-3. Showcase your hot residential & commercial inventory 24/7
+Can I share a quick 1-minute preview link with you to see how it looks?
 
-We create professional real estate websites quickly and very affordably.
-
-Can I send you a quick 2-minute demo link to show how it would look?
-
-Thanks,
-{senderName}`,
-
-  // Variation 3: Short, Direct & High-Converting
-  `Hi {name},
-
-Hope you are doing well! Reaching out regarding your business in {address}.
-
-I checked online but couldn't find an official website for {name}. Having a dedicated website gives your clients instant trust and brings verified buyer calls directly from Google search.
-
-We help local property dealers launch clean, mobile-friendly websites with instant WhatsApp inquiry buttons in just 48 hours.
-
-Would you be open to checking out a free demo preview tailored for your business?
-
-Best regards,
-{senderName}`
+- {senderName}`
 ];
 
 /**
- * Returns a personalized web development outreach message.
+ * Clean dealer name by stripping promotional suffixes like ': Property dealer in ...'
+ */
+function cleanDealerName(rawName) {
+  if (!rawName) return 'Sir/Madam';
+  let name = String(rawName).trim();
+  // Strip common suffixes
+  name = name.split(':')[0].split('|')[0].split('-')[0].trim();
+  // Remove leading/trailing non-alphanumeric except spaces
+  name = name.replace(/^[^a-zA-Z0-9\s]+|[^a-zA-Z0-9\s]+$/g, '').trim();
+  return name || String(rawName).trim();
+}
+
+/**
+ * Clean address to extract just the locality and city
+ */
+function cleanDealerAddress(rawAddress) {
+  if (!rawAddress) return 'your area';
+  const parts = String(rawAddress)
+    .split(',')
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) return 'your area';
+
+  // Filter out standalone pincodes (6 digits)
+  const cleanParts = parts
+    .map(p => p.replace(/\b\d{6}\b/g, '').trim())
+    .filter(Boolean);
+
+  if (cleanParts.length >= 2) {
+    return cleanParts.slice(-2).join(', ');
+  }
+  return cleanParts[0] || parts[0] || 'your area';
+}
+
+/**
+ * Returns a personalized, non-salesy outreach message.
  * @param {object} lead 
  * @param {number} [templateIndex]
  * @param {string} [senderName]
@@ -75,12 +102,8 @@ function getPersonalizedMessage(lead, templateIndex, senderName = 'Deepaktusir')
 
   let text = templates[index];
   
-  const cleanName = (lead.name || 'Sir/Madam').trim();
-  const cleanAddress = (lead.address || 'your area')
-    .split(',')
-    .slice(-3, -1)
-    .join(',')
-    .trim() || lead.address || 'your area';
+  const cleanName = cleanDealerName(lead.name);
+  const cleanAddress = cleanDealerAddress(lead.address);
 
   text = text.replace(/{name}/g, cleanName);
   text = text.replace(/{address}/g, cleanAddress);
@@ -92,5 +115,7 @@ function getPersonalizedMessage(lead, templateIndex, senderName = 'Deepaktusir')
 
 module.exports = {
   templates,
+  cleanDealerName,
+  cleanDealerAddress,
   getPersonalizedMessage
 };
