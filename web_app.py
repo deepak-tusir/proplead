@@ -128,8 +128,8 @@ HTML_TEMPLATE = """
             <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
                 <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-100 gap-4">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">Extract Property Dealer Leads</h2>
-                        <p class="text-sm text-slate-500 mt-1">Search any city or locality to harvest verified numbers, emails, addresses, and ratings.</p>
+                        <h2 class="text-xl font-bold text-slate-900">Multi-Niche Lead Extraction Engine</h2>
+                        <p class="text-sm text-slate-500 mt-1">Select your target industry niche (Tier 1 High-Ticket, Tier 2 Services, Tier 3 Commercial) and harvest verified local business contacts.</p>
                     </div>
                     <div class="flex items-center space-x-3">
                         <a href="/download/master-crm" class="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs sm:text-sm font-bold rounded-xl border border-emerald-200 transition-all">
@@ -142,8 +142,54 @@ HTML_TEMPLATE = """
                 <form id="scrape-form" onsubmit="startScrape(event)" class="mt-6 space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         
+                        <!-- Target Niche Selector (Categorized by Tiers) -->
+                        <div class="md:col-span-1 space-y-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center justify-between">
+                                <span>Target Industry Niche</span>
+                                <span class="text-[10px] text-indigo-600 font-bold">Tier 1-3 Categorized</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-briefcase"></i>
+                                </div>
+                                <select id="target-niche" onchange="handleNicheChange()" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none text-sm transition-all shadow-sm bg-white font-medium">
+                                    <optgroup label="👑 TIER 1: High-Ticket / Maximum Profit (Recommended)">
+                                        <option value="Property dealers" selected>Property Dealers &amp; Real Estate</option>
+                                        <option value="Interior Designers">Interior Designers &amp; Decorators</option>
+                                        <option value="Architects">Architects &amp; Design Studios</option>
+                                        <option value="Builders and Developers">Builders &amp; Real Estate Developers</option>
+                                        <option value="Banquet halls">Banquet Halls &amp; Wedding Venues</option>
+                                    </optgroup>
+                                    <optgroup label="🥈 TIER 2: Professional &amp; High-Trust Local Services">
+                                        <option value="Dental Clinics">Dental Clinics &amp; Implant Centres</option>
+                                        <option value="Hospital clinics">Polyclinics &amp; Specialized Hospitals</option>
+                                        <option value="Immigration consultants">Immigration &amp; Visa Consultants</option>
+                                        <option value="Coaching Institutes">Coaching Institutes &amp; Academies</option>
+                                        <option value="Wedding planners">Wedding Planners &amp; Luxury Event Managers</option>
+                                    </optgroup>
+                                    <optgroup label="🥉 TIER 3: High-Volume Commercial &amp; Showrooms">
+                                        <option value="Hotels and resorts">Hotels &amp; Boutique Resorts</option>
+                                        <option value="Used Car dealers">Used &amp; Luxury Car Dealerships</option>
+                                        <option value="Car modification studios">Car Modification &amp; Detailing Studios</option>
+                                        <option value="Solar panel dealers">Solar Panel Dealers &amp; Installers</option>
+                                        <option value="Furniture Manufacturers">Furniture Manufacturers &amp; Showrooms</option>
+                                        <option value="Travel agencies">Travel Agencies &amp; Tour Operators</option>
+                                    </optgroup>
+                                    <optgroup label="✏️ Custom Search">
+                                        <option value="custom">Custom Niche (Type any keyword)...</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <!-- Custom Niche Input (reveals when 'custom' selected) -->
+                            <div id="custom-niche-container" class="hidden pt-1">
+                                <input type="text" id="custom-niche-input" placeholder="e.g. Chartered Accountants, Pet Clinics, Lawyers..."
+                                    class="w-full px-3.5 py-2 rounded-xl border border-indigo-200 bg-indigo-50/50 text-xs text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-300">
+                            </div>
+                        </div>
+
                         <!-- City / Locality Input -->
-                        <div class="md:col-span-2 space-y-2">
+                        <div class="md:col-span-1 space-y-2">
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">
                                 Target City or Locality
                             </label>
@@ -158,14 +204,13 @@ HTML_TEMPLATE = """
                             </div>
 
                             <!-- Quick Area Chips -->
-                            <div class="flex flex-wrap items-center gap-1.5 pt-2">
-                                <span class="text-xs text-slate-400 mr-1">Quick Select:</span>
-                                <button type="button" onclick="setCity('South Delhi')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 font-medium transition-all">South Delhi</button>
-                                <button type="button" onclick="setCity('Gurgaon')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 font-medium transition-all">Gurgaon</button>
-                                <button type="button" onclick="setCity('Faridabad')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 font-medium transition-all">Faridabad</button>
-                                <button type="button" onclick="setCity('Sonipat')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 font-medium transition-all">Sonipat</button>
-                                <button type="button" onclick="setCity('Noida Sector 62')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 font-medium transition-all">Noida</button>
-                                <button type="button" onclick="setCity('Whitefield Bangalore')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 font-medium transition-all">Bangalore</button>
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                <span class="text-[10px] text-slate-400">Quick:</span>
+                                <button type="button" onclick="setCity('South Delhi')" class="px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md text-slate-600 font-medium transition-all">Delhi</button>
+                                <button type="button" onclick="setCity('Gurgaon')" class="px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md text-slate-600 font-medium transition-all">Gurgaon</button>
+                                <button type="button" onclick="setCity('Faridabad')" class="px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md text-slate-600 font-medium transition-all">Faridabad</button>
+                                <button type="button" onclick="setCity('Sonipat')" class="px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md text-slate-600 font-medium transition-all">Sonipat</button>
+                                <button type="button" onclick="setCity('Noida')" class="px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md text-slate-600 font-medium transition-all">Noida</button>
                             </div>
                         </div>
 
@@ -283,11 +328,11 @@ HTML_TEMPLATE = """
                         <thead>
                             <tr class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                                 <th class="p-3">#</th>
-                                <th class="p-3">Agency Name</th>
+                                <th class="p-3">Business / Agency Name</th>
                                 <th class="p-3">Phone</th>
                                 <th class="p-3">Email Address</th>
                                 <th class="p-3">Website</th>
-                                <th class="p-3">Address</th>
+                                <th class="p-3">Full Address</th>
                                 <th class="p-3">Rating</th>
                                 <th class="p-3 text-center">Action</th>
                             </tr>
@@ -358,6 +403,32 @@ HTML_TEMPLATE = """
                     </div>
 
                     <div class="flex flex-wrap items-center gap-3">
+                        <select id="crm-niche-filter" onchange="filterCrmTable()" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white outline-none">
+                            <option value="">All Niches (Tier 1-3)</option>
+                            <optgroup label="👑 TIER 1: High-Ticket">
+                                <option value="property">Property Dealers / Real Estate</option>
+                                <option value="interior">Interior Designers</option>
+                                <option value="architect">Architects</option>
+                                <option value="builder">Builders & Developers</option>
+                                <option value="banquet">Banquet Halls</option>
+                            </optgroup>
+                            <optgroup label="🥈 TIER 2: Professional Services">
+                                <option value="dental">Dental Clinics</option>
+                                <option value="clinic">Hospitals / Polyclinics</option>
+                                <option value="immigration">Immigration Consultants</option>
+                                <option value="coaching">Coaching Institutes</option>
+                                <option value="wedding">Wedding Planners</option>
+                            </optgroup>
+                            <optgroup label="🥉 TIER 3: Commercial">
+                                <option value="hotel">Hotels & Resorts</option>
+                                <option value="car">Car Dealers</option>
+                                <option value="modification">Car Modification</option>
+                                <option value="solar">Solar Panel Dealers</option>
+                                <option value="furniture">Furniture Showrooms</option>
+                                <option value="travel">Travel Agencies</option>
+                            </optgroup>
+                        </select>
+
                         <select id="crm-status-filter" onchange="filterCrmTable()" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white outline-none">
                             <option value="">All CRM Statuses</option>
                             <option value="New Lead">New Lead</option>
@@ -662,6 +733,17 @@ HTML_TEMPLATE = """
             }
         }
 
+        function handleNicheChange() {
+            const select = document.getElementById('target-niche');
+            const customDiv = document.getElementById('custom-niche-container');
+            if (select.value === 'custom') {
+                customDiv.classList.remove('hidden');
+                document.getElementById('custom-niche-input').focus();
+            } else {
+                customDiv.classList.add('hidden');
+            }
+        }
+
         function setCity(city) {
             document.getElementById('target-city').value = city;
         }
@@ -683,6 +765,12 @@ HTML_TEMPLATE = """
             const checkEmails = document.getElementById('check-emails').checked;
             const syncCrm = document.getElementById('sync-crm').checked;
 
+            const nicheSelect = document.getElementById('target-niche');
+            let niche = nicheSelect ? nicheSelect.value : 'Property dealers';
+            if (niche === 'custom') {
+                niche = (document.getElementById('custom-niche-input').value || '').trim() || 'Local Businesses';
+            }
+
             if (!city) return;
 
             document.getElementById('start-btn').disabled = true;
@@ -693,13 +781,14 @@ HTML_TEMPLATE = """
             document.getElementById('live-logs').innerHTML = '';
             document.getElementById('progress-bar').style.width = '5%';
             document.getElementById('progress-percent').innerText = '5%';
-            document.getElementById('progress-title').innerText = `Extracting leads for '${city}'...`;
+            document.getElementById('progress-title').innerText = `Extracting ${niche} in '${city}'...`;
 
-            appendLog('live-logs', `[Start] Searching for property dealers in: ${city}`);
+            appendLog('live-logs', `[Start] Searching for '${niche}' in: ${city}`);
             appendLog('live-logs', `[Config] Target: up to ${maxLeads} leads | Email Crawl: ${checkEmails} | CRM Sync: ${syncCrm}`);
 
             const params = new URLSearchParams({
                 city: city,
+                niche: niche,
                 max: maxLeads,
                 emails: checkEmails ? '1' : '0',
                 crm: syncCrm ? '1' : '0'
@@ -761,14 +850,16 @@ HTML_TEMPLATE = """
                 tr.className = "hover:bg-slate-50 transition-colors";
                 
                 const waLink = r["WhatsApp Link"] || (r["Phone Number"] ? `https://wa.me/91${r["Phone Number"].replace(/\\D/g,'')}?text=Hi` : '#');
+                const businessName = r["Dealer / Agency Name"] || r["Business Name"] || r["Agency Name"] || r["Name"] || 'N/A';
+                const fullAddress = r["Full Address"] || r["Address"] || r["Location"] || '-';
 
                 tr.innerHTML = `
                     <td class="p-3 text-slate-400 font-mono">${idx + 1}</td>
-                    <td class="p-3 font-bold text-slate-900">${r["Agency Name"] || 'N/A'}</td>
+                    <td class="p-3 font-bold text-slate-900">${businessName}</td>
                     <td class="p-3 font-semibold text-slate-700">${r["Phone Number"] || '-'}</td>
                     <td class="p-3 text-slate-600">${r["Email Address"] || '-'}</td>
                     <td class="p-3 text-indigo-600 truncate max-w-[140px]">${r["Website"] ? `<a href="${r["Website"]}" target="_blank" class="underline">${r["Website"].replace(/^https?:\\/\\//,'')}</a>` : '-'}</td>
-                    <td class="p-3 text-slate-500 truncate max-w-[160px]">${r["Address"] || '-'}</td>
+                    <td class="p-3 text-slate-500 truncate max-w-[160px]" title="${fullAddress}">${fullAddress}</td>
                     <td class="p-3 font-bold text-amber-600">${r["Rating"] ? `★ ${r["Rating"]}` : '-'}</td>
                     <td class="p-3 text-center">
                         ${r["Phone Number"] ? `
@@ -802,12 +893,14 @@ HTML_TEMPLATE = """
             const query = (document.getElementById('crm-search').value || '').toLowerCase();
             const statusFilter = document.getElementById('crm-status-filter').value;
             const waFilter = document.getElementById('crm-wa-filter').value;
+            const nicheFilter = (document.getElementById('crm-niche-filter')?.value || '').toLowerCase();
 
             const filtered = allCrmRecords.filter(r => {
                 const matchQuery = 
                     (r["Agency Name"] || '').toLowerCase().includes(query) ||
                     (r["Phone Number"] || '').toLowerCase().includes(query) ||
                     (r["Source Area / Query"] || '').toLowerCase().includes(query) ||
+                    (r["Category"] || '').toLowerCase().includes(query) ||
                     (r["Lead Status"] || '').toLowerCase().includes(query);
 
                 const matchStatus = !statusFilter || (r["Lead Status"] === statusFilter);
@@ -816,7 +909,15 @@ HTML_TEMPLATE = """
                 if (waFilter === 'sent') matchWa = Boolean(r.whatsapp_sent);
                 if (waFilter === 'unsent') matchWa = !r.whatsapp_sent;
 
-                return matchQuery && matchStatus && matchWa;
+                let matchNiche = true;
+                if (nicheFilter) {
+                    const area = (r["Source Area / Query"] || '').toLowerCase();
+                    const cat = (r["Category"] || '').toLowerCase();
+                    const name = (r["Agency Name"] || '').toLowerCase();
+                    matchNiche = area.includes(nicheFilter) || cat.includes(nicheFilter) || name.includes(nicheFilter);
+                }
+
+                return matchQuery && matchStatus && matchWa && matchNiche;
             });
 
             renderCrmTable(filtered);
@@ -858,7 +959,7 @@ HTML_TEMPLATE = """
                             </span>
                         `}
                     </td>
-                    <td class="p-3 font-bold text-slate-900">${r["Agency Name"] || 'N/A'}</td>
+                    <td class="p-3 font-bold text-slate-900">${r["Dealer / Agency Name"] || r["Business Name"] || r["Agency Name"] || r["Name"] || 'N/A'}</td>
                     <td class="p-3 font-semibold text-slate-700">${r["Phone Number"] || '-'}</td>
                     <td class="p-3">
                         ${r["Phone Number"] ? `
@@ -870,7 +971,7 @@ HTML_TEMPLATE = """
                     </td>
                     <td class="p-3 text-slate-600">${r["Email Address"] || '-'}</td>
                     <td class="p-3 text-indigo-600 truncate max-w-[120px]">${r["Website"] ? `<a href="${r["Website"]}" target="_blank" class="underline">${r["Website"].replace(/^https?:\\/\\//,'')}</a>` : '-'}</td>
-                    <td class="p-3 text-slate-500">${r["Source Area / Query"] || '-'}</td>
+                    <td class="p-3 text-slate-500">${r["Source Area"] || r["Source Area / Query"] || '-'}</td>
                     <td class="p-3 text-slate-400 text-[11px]">${r["Date Added"] || '-'}</td>
                 `;
                 tbody.appendChild(tr);
@@ -1123,6 +1224,15 @@ def api_master_leads():
     # Enrich with WhatsApp sent history
     history = load_sent_history()
     for r in records:
+        name_val = r.get("Dealer / Agency Name") or r.get("Agency Name") or r.get("Business Name") or r.get("Name") or ""
+        r["Dealer / Agency Name"] = name_val
+        r["Agency Name"] = name_val
+        r["Business Name"] = name_val
+        
+        addr_val = r.get("Full Address") or r.get("Address") or ""
+        r["Full Address"] = addr_val
+        r["Address"] = addr_val
+
         phone_raw = str(r.get("Phone Number", ""))
         digits = re.sub(r'\D', '', phone_raw)
         key10 = digits[-10:] if len(digits) >= 10 else digits
@@ -1179,9 +1289,12 @@ def api_update_status():
 def api_scrape_stream():
     """Server-Sent Events endpoint to stream live scraping progress."""
     city = request.args.get('city', 'South Delhi')
+    niche = request.args.get('niche', 'Property dealers')
     max_leads = int(request.args.get('max', 30))
     check_emails = request.args.get('emails', '1') == '1'
     sync_crm = request.args.get('crm', '1') == '1'
+    
+    target_query = f"{niche} in {city}"
     
     def event_stream():
         msg_queue = queue.Queue()
@@ -1191,32 +1304,48 @@ def api_scrape_stream():
             
         def run_scraper_thread():
             try:
-                msg_queue.put({"type": "progress", "percent": 10, "subtitle": "Launching automated browser session..."})
+                msg_queue.put({"type": "progress", "percent": 10, "subtitle": f"Launching automated browser session for '{target_query}'..."})
                 
                 # Run the async scraper
                 results = asyncio.run(scrape_property_dealers(
-                    query=f"Property dealers in {city}",
+                    query=target_query,
                     max_results=max_leads,
                     check_emails=check_emails,
                     progress_callback=progress_cb
                 ))
                 
+                # Tag each lead with niche & query and ensure display aliases
+                for r in results:
+                    name_val = r.get("Dealer / Agency Name") or r.get("Agency Name") or r.get("Business Name") or r.get("Name") or ""
+                    r["Dealer / Agency Name"] = name_val
+                    r["Agency Name"] = name_val
+                    r["Business Name"] = name_val
+
+                    addr_val = r.get("Full Address") or r.get("Address") or ""
+                    r["Full Address"] = addr_val
+                    r["Address"] = addr_val
+
+                    if not r.get("Category") or r.get("Category") == "Real Estate Agency":
+                        r["Category"] = niche
+                    r["Search Query"] = target_query
+                
                 msg_queue.put({"type": "progress", "percent": 85, "subtitle": "Formatting and building Excel file..."})
                 
                 # Export to Excel & CSV
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                safe_name = "".join(c if c.isalnum() else "_" for c in city).strip("_")
+                safe_niche = "".join(c if c.isalnum() else "_" for c in niche).strip("_")
+                safe_city = "".join(c if c.isalnum() else "_" for c in city).strip("_")
                 output_dir = crm_manager.get_exports_dir()
-                excel_filename = f"{safe_name}_property_dealers_{timestamp}.xlsx"
+                excel_filename = f"{safe_niche}_{safe_city}_{timestamp}.xlsx"
                 excel_path = os.path.join(output_dir, excel_filename)
                 
-                export_to_excel(results, excel_path, search_query=f"Property dealers in {city}")
+                export_to_excel(results, excel_path, search_query=target_query)
                 csv_filename = excel_filename.replace('.xlsx', '.csv')
                 
                 # Sync with Master CRM if requested
                 if sync_crm:
                     msg_queue.put({"type": "log", "message": "[CRM] Merging into Master CRM Database & deduplicating..."})
-                    crm_stats = crm_manager.sync_to_master_crm(results, source_area=city)
+                    crm_stats = crm_manager.sync_to_master_crm(results, source_area=f"{niche} - {city}")
                     msg_queue.put({"type": "log", "message": f"[CRM] Sync complete! Total active CRM leads: {crm_stats['total_in_master']} (+{crm_stats['newly_added']} new)"})
                 
                 stats = {

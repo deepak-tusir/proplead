@@ -29,9 +29,10 @@ def print_banner():
 def main():
     print_banner()
     
-    parser = argparse.ArgumentParser(description="Scrape property dealers and export to Excel.")
+    parser = argparse.ArgumentParser(description="Scrape local business leads and export to Excel.")
+    parser.add_argument("-n", "--niche", type=str, default="Property dealers", help="Target business niche (e.g. 'Interior Designers', 'Dental Clinics', 'Property dealers')")
     parser.add_argument("-c", "--city", type=str, help="Target city or locality (e.g. 'South Delhi', 'Gurgaon', 'Mumbai')")
-    parser.add_argument("-q", "--query", type=str, help="Custom search query (overrides city)")
+    parser.add_argument("-q", "--query", type=str, help="Custom search query (overrides city and niche)")
     parser.add_argument("-m", "--max-results", type=int, default=0, help="Maximum number of leads to collect")
     parser.add_argument("-o", "--output", type=str, help="Custom output Excel filename/path")
     parser.add_argument("--no-email", action="store_true", help="Skip crawling websites for email addresses (faster)")
@@ -43,14 +44,16 @@ def main():
     query = args.query
     if not query:
         if args.city:
-            query = f"Property dealers in {args.city}"
+            query = f"{args.niche} in {args.city}"
         else:
-            print("Enter target city or locality (e.g., South Delhi, Gurgaon, Mumbai, London, Dubai):")
+            print("Select target business niche (e.g. Interior Designers, Dental Clinics, Property dealers) [Default: Property dealers]:")
+            user_niche = input("Target Niche > ").strip() or "Property dealers"
+            print("\nEnter target city or locality (e.g., South Delhi, Gurgaon, Mumbai, Bangalore):")
             user_city = input("Target City / Area > ").strip()
             if not user_city:
                 user_city = "South Delhi"
                 print(f"No city entered. Using default: {user_city}")
-            query = f"Property dealers in {user_city}"
+            query = f"{user_niche} in {user_city}"
             
     # 2. Determine max results
     max_results = args.max_results

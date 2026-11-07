@@ -1,0 +1,180 @@
+{
+  "tier_1": {
+    "title": "👑 TIER 1: High-Ticket / Maximum Profit (Recommended)",
+    "description": "High project values, huge client commissions, and visual portfolio needs. Clients pay ₹15,000 - ₹30,000+ happily.",
+    "niches": [
+      {
+        "id": "real_estate",
+        "name": "Property Dealers & Real Estate",
+        "query": "Property dealers",
+        "keywords": ["property dealer", "real estate", "realtor", "property consultant", "property advisor", "property"],
+        "offer_item": "available properties aur plots",
+        "demo_type": "1-click WhatsApp property catalog demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka real estate profile dekh raha tha.\nAapke paas available properties/plots dekhne ke liye koi website link hai, ya fir aap inventory direct WhatsApp par hi share karte hain?\n\nActually humne property consultants ke liye ek simple 1-click WhatsApp showcase demo banaya hai. Agar aap kahen to 1 minute ka preview link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your real estate consultancy in {address}.\n\nQuick question — do you have a website link to view your active properties, or do you share listings directly on WhatsApp?\n\nI recently designed a simple mobile portfolio demo tailored for property consultants (with direct WhatsApp inquiry buttons).\n\nWould you be open to checking out a quick 1-minute demo link?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "interior_designers",
+        "name": "Interior Designers & Decorators",
+        "query": "Interior Designers",
+        "keywords": ["interior", "designer", "decor", "home decor", "architectural interior"],
+        "offer_item": "completed interior projects aur design portfolio",
+        "demo_type": "1-click WhatsApp interior portfolio showcase demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka interior design studio profile dekh raha tha. Work kaafi impressive hai!\n\nAapke completed residential aur commercial projects ka portfolio dekhne ke liye koi website link hai, ya fir photos direct WhatsApp par share karte hain?\n\nHumne interior designers ke liye ek clean mobile portfolio demo ready kiya hai jisme clients photos dekh kar direct WhatsApp enquiry bhej sakein. Kya mai 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your interior design business in {address}. Great work!\n\nQuick question — do you have a website link to view your completed project portfolio, or do you share photos directly on WhatsApp?\n\nI designed a clean mobile portfolio showcase tailored for interior designers with instant WhatsApp inquiry buttons.\n\nOpen to checking out a quick 1-minute preview link?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "architects",
+        "name": "Architects & Design Studios",
+        "query": "Architects",
+        "keywords": ["architect", "architecture", "building design", "elevation"],
+        "offer_item": "architectural projects aur modern elevations",
+        "demo_type": "sleek architecture portfolio demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka architectural studio profile dekh raha tha.\nAapke completed projects aur modern elevations ka portfolio dekhne ke liye koi official website link hai?\n\nHumne architects ke liye ek premium, minimal mobile portfolio showcase demo banaya hai jisme clients past work dekh kar direct WhatsApp consult kar sakein. Agar aap kahen to 1 minute ka link bhejun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your architectural studio in {address}.\n\nQuick question — do you have a website to browse your architectural designs and elevations, or do you share project files directly with clients?\n\nI put together a clean, modern showcase demo specifically for architecture studios. Would you be open to a quick 1-minute preview?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "builders",
+        "name": "Builders & Real Estate Developers",
+        "query": "Builders and Developers",
+        "keywords": ["builder", "developer", "construction", "colonizers"],
+        "offer_item": "new residential aur commercial projects",
+        "demo_type": "project showcase demo with brochure download & WhatsApp leads",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka real estate development work dekh raha tha.\nAapke active residential ya commercial projects ki floor plans aur brochure details dekhne ke liye koi website link hai?\n\nHumne builders ke liye ek fast 1-page project launch demo ready kiya hai jisme buyers direct brochure download aur WhatsApp inquiry kar sakein. Kya mai 1 minute ka preview link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your construction and development profile in {address}.\n\nQuick question — do you have an official website to showcase your active projects and floor plans to prospective buyers?\n\nWe designed a fast project showcase demo tailored for builders with 1-click WhatsApp brochure downloads. Would you be open to seeing a 1-minute preview?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "banquet_halls",
+        "name": "Banquet Halls & Wedding Venues",
+        "query": "Banquet halls",
+        "keywords": ["banquet", "resort", "wedding hall", "party hall", "marriage lawn"],
+        "offer_item": "hall photos, capacity aur booking packages",
+        "demo_type": "venue tour & date availability inquiry demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka banquet venue dekh raha tha. Venue kaafi sundar hai!\n\nAapke hall ki decor photos, guest capacity aur packages check karne ke liye koi website link hai, ya details WhatsApp par hi share karte hain?\n\nHumne banquet venues ke liye ek clean mobile tour demo banaya hai jahan family wale photos dekh kar direct date booking ke liye WhatsApp inquiry kar sakein. Kya mai 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your banquet venue in {address}. Beautiful property!\n\nQuick question — do you have a website to browse your hall decor photos, guest capacity, and event packages, or do you share details on WhatsApp?\n\nWe created a clean mobile showcase demo made for banquet halls with instant WhatsApp date-availability buttons. Open to checking out a 1-minute demo link?\n\nBest,\n{senderName}"
+      }
+    ]
+  },
+  "tier_2": {
+    "title": "🥈 TIER 2: Professional & High-Trust Local Services",
+    "description": "High trust, local doctor/consultant authority. Clients pay ₹10,000 - ₹18,000 for appointment booking & credential showcase.",
+    "niches": [
+      {
+        "id": "dental_clinics",
+        "name": "Dental Clinics & Implant Centres",
+        "query": "Dental Clinics",
+        "keywords": ["dental", "dentist", "teeth", "implant", "orthodontic"],
+        "offer_item": "treatments aur patient consultation timings",
+        "demo_type": "clinic showcase with 1-click WhatsApp appointment booking demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka dental clinic listing dekh raha tha.\nAapke dental treatments aur doctor consultation timings dekhne ke liye koi website link hai, ya patients direct clinic call karte hain?\n\nActually humne dental clinics ke liye ek clean mobile page demo banaya hai jisme patients Google se direct WhatsApp par appointment book kar sakein. Agar aap kahen to 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hello {name},\n\nCame across your dental practice in {address}.\n\nQuick question — do you have a website link for patients to view your dental treatments, timings, and credentials, or do they book appointments by call?\n\nWe put together a simple 1-page mobile demo tailored for dental clinics with 1-click WhatsApp appointment scheduling. Open to seeing a quick 1-minute preview?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "hospital_clinics",
+        "name": "Polyclinics & Specialized Hospitals",
+        "query": "Hospital clinics",
+        "keywords": ["clinic", "hospital", "healthcare", "polyclinic", "doctor"],
+        "offer_item": "departments aur doctor consultation details",
+        "demo_type": "hospital appointment & doctor profile demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka healthcare clinic listing dekh raha tha.\nAapke available doctors aur department timings dekhne ke liye koi official website link hai?\n\nHumne local clinics ke liye ek clean mobile demo banaya hai jahan patients timing aur doctor profile check karke direct WhatsApp inquiry kar sakein. Kya mai 1 minute ka preview link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your medical clinic in {address}.\n\nQuick question — do you have a website link to view your consulting doctors, departments, and OPD timings?\n\nI designed a clean, patient-friendly mobile showcase demo with direct WhatsApp inquiry buttons. Would you be open to checking out a 1-minute preview link?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "immigration_consultants",
+        "name": "Immigration & Visa Consultants",
+        "query": "Immigration consultants",
+        "keywords": ["immigration", "visa", "study abroad", "ielts", "overseas"],
+        "offer_item": "visa programs aur country options",
+        "demo_type": "visa eligibility check & WhatsApp lead demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka visa consultancy profile dekh raha tha.\nAapke study visa / PR programs aur services dekhne ke liye koi website link hai?\n\nHumne immigration consultants ke liye ek high-converting mobile demo banaya hai jisme students direct WhatsApp par country eligibility check kar sakein. Agar aap kahen to 1 minute ka demo link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your immigration consultancy in {address}.\n\nQuick question — do you have a website for applicants to check eligible countries and visa categories, or do you handle queries directly on WhatsApp?\n\nWe built a sleek mobile showcase demo tailored for visa consultants with instant WhatsApp inquiry buttons. Open to seeing a 1-minute demo link?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "coaching_institutes",
+        "name": "Coaching Institutes & Academies",
+        "query": "Coaching Institutes",
+        "keywords": ["coaching", "institute", "classes", "academy", "tuition"],
+        "offer_item": "courses, batch timings aur fee structure",
+        "demo_type": "course catalog & demo class registration demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka coaching institute profile dekh raha tha.\nAapke courses, batch timings aur faculty details dekhne ke liye koi website link hai, ya students direct call karte hain?\n\nHumne coaching institutes ke liye ek clean mobile page demo banaya hai jisme parents direct WhatsApp par syllabus aur demo class register kar sakein. Kya mai 1 minute ka preview link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your coaching academy in {address}.\n\nQuick question — do you have an official website to browse your course offerings, batch schedules, and fee details?\n\nI designed a clean mobile showcase demo made for education institutes with 1-click WhatsApp demo class booking. Would you like to check out a 1-minute preview?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "wedding_planners",
+        "name": "Wedding Planners & Luxury Event Managers",
+        "query": "Wedding planners",
+        "keywords": ["wedding", "planner", "event management", "decor", "marriage"],
+        "offer_item": "wedding themes, past setups aur packages",
+        "demo_type": "visual event portfolio & WhatsApp quote demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka wedding planning profile dekh raha tha. Setups bohot grand lag rahe hain!\n\nAapke past wedding decor aur customized packages dekhne ke liye koi portfolio website link hai?\n\nHumne wedding planners ke liye ek visual-first mobile portfolio demo banaya hai jahan couples photos dekh kar direct date quote ke liye WhatsApp kar sakein. Kya mai 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your wedding planning and event profile in {address}. Outstanding decor!\n\nQuick question — do you have a website link to showcase your wedding themes and past event setups to prospective couples?\n\nI put together a clean mobile portfolio demo tailored for wedding planners with instant WhatsApp consultation buttons. Open to seeing a 1-minute demo link?\n\nBest,\n{senderName}"
+      }
+    ]
+  },
+  "tier_3": {
+    "title": "🥉 TIER 3: High-Volume Commercial & Showrooms",
+    "description": "Product catalogs, live inventory, and quote inquiries. Great for reselling to local business marketing agencies.",
+    "niches": [
+      {
+        "id": "hotels_resorts",
+        "name": "Hotels & Boutique Resorts",
+        "query": "Hotels and resorts",
+        "keywords": ["hotel", "resort", "stay", "guest house", "lodge"],
+        "offer_item": "room photos, amenities aur direct booking rates",
+        "demo_type": "room showcase & 0% commission direct WhatsApp reservation demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka hotel profile dekh raha tha. Property kaafi premium hai!\n\nAapke rooms ki photos, amenities aur direct tariff check karne ke liye koi official website link hai, ya bookings sirf OTA portals se aati hain?\n\nHumne hotels ke liye ek 1-page direct booking demo banaya hai jisme guests bina commission ke direct WhatsApp par room reserve kar sakein. Kya mai 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your hotel in {address}. Great property!\n\nQuick question — do you have a direct website link to view room photos and amenities, or do you rely entirely on third-party OTA portals?\n\nWe created a simple mobile showcase demo for hotels that enables direct WhatsApp reservations (0% commission). Open to checking out a 1-minute preview link?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "car_dealers",
+        "name": "Used & Luxury Car Dealerships",
+        "query": "Used Car dealers",
+        "keywords": ["car", "cars", "automobile", "motors", "pre-owned"],
+        "offer_item": "available car inventory, models aur prices",
+        "demo_type": "digital car showroom inventory demo with WhatsApp test drive",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka car dealership profile dekh raha tha.\nAapke paas ready stock cars ke models, photos aur prices dekhne ke liye koi website link hai?\n\nHumne car dealers ke liye ek fast digital showroom demo banaya hai jisme buyers active stock dekh kar direct WhatsApp par test drive aur negotiation message kar sakein. Kya mai 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your pre-owned car dealership in {address}.\n\nQuick question — do you have an official website to browse your available car stock with photos and pricing, or do you share options on WhatsApp?\n\nI built a clean digital showroom demo tailored for auto dealers with 1-click WhatsApp inquiry buttons. Would you be open to a quick 1-minute preview?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "car_modifications",
+        "name": "Car Modification & Detailing Studios",
+        "query": "Car modification studios",
+        "keywords": ["modification", "detailing", "ppf", "ceramic", "tuning", "custom car"],
+        "offer_item": "PPF, ceramic coating aur custom modification work",
+        "demo_type": "before/after build showcase demo with WhatsApp price quote",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka car customisation aur detailing studio profile dekh raha tha. Builds kaafi zabardast hain!\n\nAapke PPF, ceramic aur custom projects ka portfolio dekhne ke liye koi website link hai?\n\nHumne detailing studios ke liye ek visual before/after project showcase demo banaya hai jahan car lovers direct WhatsApp par price quote le sakein. Kya mai 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your car customization studio in {address}. Impressive builds!\n\nQuick question — do you have a portfolio website to showcase your ceramic, PPF, and custom modification projects to car enthusiasts?\n\nI designed a clean mobile showcase demo for auto studios with direct WhatsApp inquiry buttons. Open to checking out a 1-minute preview?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "solar_dealers",
+        "name": "Solar Panel Dealers & Installers",
+        "query": "Solar panel dealers",
+        "keywords": ["solar", "rooftop", "solar energy", "inverter", "pv system"],
+        "offer_item": "solar packages, subsidy details aur bill saving estimates",
+        "demo_type": "rooftop solar quotation & WhatsApp estimate demo",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka solar energy business profile dekh raha tha.\nAapke rooftop solar packages aur subsidy details dekhne ke liye koi official website link hai?\n\nHumne solar dealers ke liye ek clean lead-generation demo banaya hai jisme customer monthly bill ke hisab se direct WhatsApp par quote le sakein. Agar aap kahen to 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your solar energy business in {address}.\n\nQuick question — do you have a website to showcase your rooftop solar packages and subsidy benefits to residential and commercial clients?\n\nWe designed a clean mobile page demo for solar installers with instant WhatsApp quotation buttons. Open to seeing a 1-minute demo link?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "furniture_manufacturers",
+        "name": "Furniture Manufacturers & Showrooms",
+        "query": "Furniture Manufacturers",
+        "keywords": ["furniture", "sofa", "woodwork", "modular", "interior furniture"],
+        "offer_item": "custom furniture designs aur sofa/wardrobe catalog",
+        "demo_type": "digital furniture catalog demo with WhatsApp pricing",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka furniture showroom profile dekh raha tha. Designs kaafi premium hain!\n\nAapke custom sofas, beds aur modular wardrobe designs ka catalog dekhne ke liye koi website link hai?\n\nHumne furniture manufacturers ke liye ek clean digital catalog demo banaya hai jisme customer designs dekh kar direct WhatsApp par size aur price confirm kar sakein. Kya mai 1 minute ka link bhejun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your furniture manufacturing business in {address}. Great craftsmanship!\n\nQuick question — do you have a digital catalog or website to browse your furniture collection, or do you share designs directly on WhatsApp?\n\nI put together a clean mobile catalog demo made for furniture studios with direct WhatsApp pricing buttons. Would you be open to a 1-minute preview?\n\nBest,\n{senderName}"
+      },
+      {
+        "id": "travel_agencies",
+        "name": "Travel Agencies & Tour Operators",
+        "query": "Travel agencies",
+        "keywords": ["travel", "tour", "holidays", "trip", "packages"],
+        "offer_item": "domestic aur international holiday packages",
+        "demo_type": "travel package brochure demo with WhatsApp custom quote",
+        "pitch_hinglish": "Namaste {name} ji,\n\nMain {address} me aapka tour & travel agency profile dekh raha tha.\nAapke popular domestic aur international holiday packages dekhne ke liye koi website link hai?\n\nHumne travel agencies ke liye ek clean mobile tour package demo banaya hai jisme clients itinerary dekh kar direct WhatsApp par family package quote le sakein. Kya mai 1 minute ka link share karun?\n\n- {senderName}",
+        "pitch_english": "Hi {name},\n\nCame across your travel agency in {address}.\n\nQuick question — do you have an official website to browse your domestic and international holiday packages, or do you share itineraries on WhatsApp?\n\nWe built a sleek mobile package demo for tour operators with 1-click WhatsApp quote requests. Open to checking out a 1-minute preview link?\n\nBest,\n{senderName}"
+      }
+    ]
+  }
+}

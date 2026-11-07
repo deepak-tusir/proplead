@@ -1,31 +1,39 @@
 # 🏢 PropLead & WhatsApp Outreach Hub (Unified Command Center)
 
-Ek hi jagah se **Property Dealer Leads Scrape** karne, **Master CRM** me manage karne, aur unhe direct **WhatsApp Web Development Pitch** automate karne ka complete unified tool.
+Ek hi jagah se **Multi-Niche B2B Local Leads Scrape** karne, **Master CRM** me manage karne, aur unhe direct **Automated Conversational WhatsApp Pitches** bhejne ka complete unified client acquisition engine.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Google Maps Property Dealer Scraper (Python + Playwright)**:
-   - Kisi bhi city ya locality (e.g., *South Delhi*, *Gurgaon*, *Sonipat*, *Bangalore*) se real estate dealers scrape karein.
-   - Agency Name, Phone Number, Business Email, Website, Full Address, Star Rating & Review count nikalta hai.
+1. **Multi-Niche Google Maps Scraper (Python + Playwright)**:
+   - Ab sirf property dealers hi nahi, balki **16+ Curated High-Converting Niches** me se kisi ko bhi target karein:
+     - 👑 **Tier 1 (High-Ticket):** Real Estate, Interior Designers, Architects, Builders, Banquet Halls.
+     - 🥈 **Tier 2 (High-Trust Services):** Dental Clinics, Polyclinics, Immigration Consultants, Coaching Institutes, Wedding Planners.
+     - 🥉 **Tier 3 (Commercial Showrooms):** Hotels & Resorts, Used Car Dealers, Car Modification, Solar Dealers, Furniture, Travel.
+     - ✏️ **Custom Niche:** Koi bhi local business keyword type karke scrape karein.
+   - Business Name, Phone Number, Business Email, Website, Full Address, Star Rating & Review count nikalta hai.
    - Excel (`.xlsx`) and `.csv` formatted auto-exports with WhatsApp direct links.
 
 2. **Master CRM Lead Database (`crm_manager.py`)**:
-   - Sabhi cities ke leads automatically `Master_CRM_Leads.xlsx` me deduplicate hokar merge hote hain.
-   - Lead Status management (`New Lead`, `Contacted`, `Follow Up`, `Meeting Scheduled`, `Converted`, `Not Interested`).
-   - WhatsApp outreach status indicator (pata chal jata hai ki kis dealer ko WhatsApp message bheja ja chuka hai aur kisko nahi).
+   - Sabhi cities aur niches ke leads automatically `Master_CRM_Leads.xlsx` me deduplicate hokar merge hote hain.
+   - Niche Filter + Lead Status management (`New Lead`, `Contacted`, `Follow Up`, `Meeting Scheduled`, `Converted`, `Not Interested`).
+   - WhatsApp outreach status indicator (`✅ Sent` with timestamp ya `Unsent`).
 
-3. **WhatsApp Outreach Engine (Node.js + `whatsapp-web.js`)**:
-   - Scraped leads ko customized website development / real estate portal pitch bhejne ka system.
+3. **Smart Niche-Specific WhatsApp Outreach Engine (Node.js + `whatsapp-web.js`)**:
+   - Har niche ke dukh-dard ke hisab se **personalized non-salesy pitch**:
+     - *Interior / Architects:* Project portfolio & design showcase pitch.
+     - *Dental / Clinics:* Patient appointment scheduling pitch.
+     - *Real Estate:* Active inventory & WhatsApp leads pitch.
+     - *Banquet / Hotels:* Venue decor photos & date booking pitch.
    - **Anti-Ban Safeguards**: Random delays (25s - 50s), batch limits (10-30), WhatsApp number validation check, deduplication against `sent_history.json`.
-   - **Filter targets**: Sirf unhi dealers ko message bhejta hai jinki website nahi hai (`onlyWithoutWebsite: true`).
+   - **Filter targets**: Sirf unhi businesses ko message bhejta hai jinki website nahi hai (`onlyWithoutWebsite: true`).
    - Saved login session (`.wwebjs_auth`) — baar-baar QR code scan karne ki zaroorat nahi.
 
 4. **Unified Web Dashboard (Browser GUI - `http://localhost:5000`)**:
    - Single browser tab me teeno tools:
-     - **Tab 1: Lead Scraper**: Live progress bar, live logs stream.
-     - **Tab 2: Master CRM**: Search, status dropdowns, WhatsApp chat quick links, Excel download.
+     - **Tab 1: Lead Scraper**: Categorized Niche selector (Tier 1-3), live progress bar, live logs stream, session preview table.
+     - **Tab 2: Master CRM**: Niche & Status filters, search, WhatsApp chat quick links, Excel download.
      - **Tab 3: WhatsApp Outreach**: Dry-run preview, test message to your own phone, live automated campaign with real-time countdown timer.
 
 ---

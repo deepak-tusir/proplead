@@ -1,67 +1,31 @@
 /**
- * WhatsApp Outreach Templates - Conversational & Non-Salesy
- * Crafted specifically for real estate consultants & property dealers.
- * 
- * Key Principles:
- *  1. Short (under 4-5 lines) - Easy to read on a phone screen.
- *  2. Conversational & Humble - Does NOT sound like an agency sales pitch.
- *  3. Curious Question Hook - High reply rate ("Do you have a link or share on WhatsApp?").
- *  4. Low-Friction Ask - "Can I share a 1-minute demo link?"
- * 
- * Available Placeholders:
- *   {name}        - Clean Business / Dealer Name
- *   {address}     - Locality / City
- *   {category}    - Category (e.g. Real estate consultant)
- *   {senderName}  - Your Name / Signature
+ * WhatsApp Outreach Templates Engine
+ * Powered by Structured Niches Configuration (Tier 1, Tier 2, Tier 3)
+ * Provides ultra-short, natural, conversational pitches tailored to each business.
  */
 
-const templates = [
-  // Variation 1: Natural Hinglish (Highest reply rate in India - Friendly inquiry)
-  `Namaste {name} ji,
+const fs = require('fs');
+const path = require('path');
 
-Main {address} me aapka profile dekh raha tha.
-Aapke paas available properties dekhne ke liye koi website link hai, ya fir aap inventory direct WhatsApp par hi share karte hain?
-
-Actually humne property consultants ke liye ek simple 1-click WhatsApp showcase demo banaya hai. Agar aap kahen to 1 minute ka preview link share karun?
-
-- {senderName}`,
-
-  // Variation 2: Clean, Casual English (Curious & Natural)
-  `Hi {name},
-
-Came across your real estate business in {address}.
-
-Quick question — do you have a website link to view your active properties, or do you share listings directly on WhatsApp?
-
-I recently designed a simple mobile portfolio demo tailored for property consultants (with direct WhatsApp inquiry buttons). 
-
-Would you be open to checking out a quick 1-minute demo link?
-
-Best,
-{senderName}`,
-
-  // Variation 3: Short Helpful Observation (Hinglish/English mix)
-  `Hello {name} ji,
-
-I was looking up your property business in {address} on Google, but noticed you don't have an official website link attached.
-
-We put together a clean 1-page mobile showcase demo made for property dealers so buyers can browse your hot listings and WhatsApp you directly.
-
-Can I share a quick 1-minute preview link with you to see how it looks?
-
-- {senderName}`
-];
+// Load Niches Configuration
+let nichesConfig = null;
+try {
+  const raw = fs.readFileSync(path.join(__dirname, 'niches_config.json'), 'utf8');
+  nichesConfig = JSON.parse(raw);
+} catch (e) {
+  console.warn('⚠️ Could not load niches_config.json, using fallback templates');
+}
 
 /**
- * Clean dealer name by stripping promotional suffixes like ': Property dealer in ...'
+ * Clean dealer/business name by stripping promotional suffixes like ': Property dealer in ...'
  */
 function cleanDealerName(rawName) {
   if (!rawName) return 'Sir/Madam';
   let name = String(rawName).trim();
-  // Strip common suffixes
-  name = name.split(':')[0].split('|')[0].split('-')[0].trim();
-  // Remove leading/trailing non-alphanumeric except spaces
-  name = name.replace(/^[^a-zA-Z0-9\s]+|[^a-zA-Z0-9\s]+$/g, '').trim();
+  // Strip common promo suffixes like " : ...", " | ...", " - ..."
+  name = name.split(':')[0].split('|')[0].split(' - ')[0].trim();
+  // Remove leading/trailing non-alphanumeric except spaces and periods (to keep Dr.)
+  name = name.replace(/^[^a-zA-Z0-9.\s]+|[^a-zA-Z0-9.\s]+$/g, '').trim();
   return name || String(rawName).trim();
 }
 
@@ -89,33 +53,102 @@ function cleanDealerAddress(rawAddress) {
 }
 
 /**
- * Returns a personalized, non-salesy outreach message.
+ * Find matching niche configuration based on lead category, name, or search query
+ */
+function findMatchingNiche(lead) {
+  if (!nichesConfig) return null;
+
+  const textToSearch = [
+    lead.category || '',
+    lead.niche || '',
+    lead.searchQuery || '',
+    lead.name || ''
+  ].join(' ').toLowerCase();
+
+  const allTiers = ['tier_1', 'tier_2', 'tier_3'];
+  for (const tierKey of allTiers) {
+    const tier = nichesConfig[tierKey];
+    if (!tier || !tier.niches) continue;
+
+    for (const niche of tier.niches) {
+      for (const kw of niche.keywords) {
+        if (textToSearch.includes(kw.toLowerCase())) {
+          return { ...niche, tierKey };
+        }
+      }
+    }
+  }
+
+  // Default to tier 1 real estate
+  return nichesConfig.tier_1?.niches[0] || null;
+}
+
+/**
+ * Fallback baseline templates (Real estate & universal)
+ */
+const fallbackTemplates = [
+  // Variation 1: Hinglish Natural
+  `Namaste {name} ji,
+
+Main {address} me aapka profile dekh raha tha.
+Aapke paas available properties dekhne ke liye koi website link hai, ya fir aap inventory direct WhatsApp par hi share karte hain?
+
+Actually humne property consultants ke liye ek simple 1-click WhatsApp showcase demo banaya hai. Agar aap kahen to 1 minute ka preview link share karun?
+
+- {senderName}`,
+
+  // Variation 2: Casual English
+  `Hi {name},
+
+Came across your real estate business in {address}.
+
+Quick question — do you have a website link to view your active properties, or do you share listings directly on WhatsApp?
+
+I recently designed a simple mobile portfolio demo tailored for property consultants (with direct WhatsApp inquiry buttons). 
+
+Would you be open to checking out a quick 1-minute demo link?
+
+Best,
+{senderName}`
+];
+
+/**
+ * Returns a personalized, non-salesy outreach message tailored to the specific niche.
  * @param {object} lead 
  * @param {number} [templateIndex]
  * @param {string} [senderName]
  * @returns {string}
  */
 function getPersonalizedMessage(lead, templateIndex, senderName = 'Deepaktusir') {
-  const index = typeof templateIndex === 'number' 
-    ? templateIndex % templates.length 
-    : Math.floor(Math.random() * templates.length);
+  const matched = findMatchingNiche(lead);
 
-  let text = templates[index];
-  
+  let rawTemplate = '';
+  if (matched) {
+    // Choose between Hinglish and English based on templateIndex
+    const useHinglish = typeof templateIndex === 'number' ? (templateIndex % 2 === 0) : true;
+    rawTemplate = useHinglish ? (matched.pitch_hinglish || matched.pitch_english) : (matched.pitch_english || matched.pitch_hinglish);
+  } else {
+    const idx = typeof templateIndex === 'number' ? templateIndex % fallbackTemplates.length : 0;
+    rawTemplate = fallbackTemplates[idx];
+  }
+
   const cleanName = cleanDealerName(lead.name);
   const cleanAddress = cleanDealerAddress(lead.address);
 
+  let text = rawTemplate;
   text = text.replace(/{name}/g, cleanName);
   text = text.replace(/{address}/g, cleanAddress);
-  text = text.replace(/{category}/g, lead.category || 'Business');
+  text = text.replace(/{category}/g, lead.category || matched?.name || 'Business');
   text = text.replace(/{senderName}/g, senderName);
 
   return text;
 }
 
 module.exports = {
-  templates,
+  nichesConfig,
   cleanDealerName,
   cleanDealerAddress,
-  getPersonalizedMessage
+  findMatchingNiche,
+  getPersonalizedMessage,
+  templates: fallbackTemplates
 };
