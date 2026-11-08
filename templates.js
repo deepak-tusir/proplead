@@ -1,7 +1,8 @@
 /**
  * WhatsApp Outreach Templates Engine
  * Powered by Structured Niches Configuration (Tier 1, Tier 2, Tier 3)
- * Provides ultra-short, natural, conversational pitches tailored to each business.
+ * Provides ultra-short, natural, conversational pitches tailored to each business,
+ * and smart follow-up message generators (1st & 2nd follow-up).
  */
 
 const fs = require('fs');
@@ -144,11 +145,47 @@ function getPersonalizedMessage(lead, templateIndex, senderName = 'Deepaktusir')
   return text;
 }
 
+/**
+ * Returns a personalized follow-up message based on whether it is 1st or 2nd follow-up,
+ * and whether the recipient has seen (blue ticked) the previous message or not.
+ * @param {object} lead
+ * @param {number} followUpNumber (1 or 2)
+ * @param {boolean} isSeen
+ * @param {string} senderName
+ * @returns {string}
+ */
+function getFollowUpMessage(lead, followUpNumber = 1, isSeen = false, senderName = 'Deepaktusir') {
+  const cleanName = cleanDealerName(lead.name);
+  const cleanAddress = cleanDealerAddress(lead.address);
+
+  let text = '';
+  if (followUpNumber === 1) {
+    if (isSeen) {
+      // Blue Ticked / Read, but no reply
+      text = `Namaste {name} ji, just checking agar aapko mera previous message mila tha? Koi jaldi nahi hai, agar aap kahen to bas 1 minute ka demo link yahan share kar dun?\n\n- {senderName}`;
+    } else {
+      // Unopened / Grey Tick - Gentle bump
+      text = `Hi {name} ji, hope you are doing well! Ek quick question tha regarding your business in {address} — kya aap properties/work catalog direct WhatsApp par hi share karte hain?\n\n- {senderName}`;
+    }
+  } else {
+    // Follow-up 2: The Respectful Breakup Message (Final attempt before moving to Dead List)
+    text = `Namaste {name} ji, last message meri taraf se taaki aapka time waste na ho. Agar aapko apne business ke liye custom showcase demo nahi dekhna to no problem at all! Wishing you great business ahead.\n\n- {senderName}`;
+  }
+
+  text = text.replace(/{name}/g, cleanName);
+  text = text.replace(/{address}/g, cleanAddress);
+  text = text.replace(/{category}/g, lead.category || 'Business');
+  text = text.replace(/{senderName}/g, senderName);
+
+  return text;
+}
+
 module.exports = {
   nichesConfig,
   cleanDealerName,
   cleanDealerAddress,
   findMatchingNiche,
   getPersonalizedMessage,
+  getFollowUpMessage,
   templates: fallbackTemplates
 };

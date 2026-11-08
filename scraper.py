@@ -1,5 +1,5 @@
 """
-Property Dealer & Real Estate Lead Scraper
+Property Dealer & Multi-Niche Business Lead Scraper
 Extracts names, phone numbers, websites, emails, addresses, ratings, and Google Maps links.
 Exports into a formatted Excel (.xlsx) workbook and CSV.
 """
@@ -91,7 +91,7 @@ def is_valid_email(email: str) -> bool:
 
 def extract_emails_from_website(url: str, timeout: int = 7) -> str:
     """
-    Crawls dealer website homepage and contact/about page to harvest business email addresses.
+    Crawls business website homepage and contact/about page to harvest email addresses.
     """
     if not url or not url.startswith('http'):
         return ""
@@ -167,16 +167,25 @@ async def scrape_property_dealers(
     progress_callback=None
 ) -> list[dict]:
     """
-    Main scraping function using Playwright to query Google Maps and retrieve property dealers.
+    Main scraping function using Playwright to query Google Maps and retrieve multi-niche business leads.
     """
     results = []
     
-    # Format search query
+    # Format search query dynamically for multi-niche intelligence
     clean_query = query.strip()
-    if not clean_query.lower().startswith(('property', 'real estate', 'realtor', 'broker')):
-        search_term = f"Property dealers in {clean_query}"
-    else:
+    if " in " in clean_query.lower():
+        # Complete query provided e.g. "Interior Designers in South Delhi"
         search_term = clean_query
+    elif any(k in clean_query.lower() for k in (
+        'designer', 'interior', 'architect', 'clinic', 'dental', 'hospital',
+        'hotel', 'resort', 'banquet', 'coaching', 'institute', 'builder',
+        'developer', 'wedding', 'planner', 'car', 'solar', 'furniture',
+        'travel', 'property', 'real estate', 'realtor', 'broker', 'manufacturer'
+    )):
+        search_term = clean_query
+    else:
+        # Fallback only when a lone city was provided
+        search_term = f"Property dealers in {clean_query}"
         
     maps_search_url = f"https://www.google.com/maps/search/{urllib.parse.quote(search_term)}"
     
@@ -235,7 +244,7 @@ async def scrape_property_dealers(
 
             total_found = len(place_urls)
             if progress_callback:
-                progress_callback(f"Found {total_found} property dealers. Extracting complete details...")
+                progress_callback(f"Found {total_found} business listings. Extracting complete details...")
                 
             # Extract detailed information for each place
             detail_page = await context.new_page()
@@ -256,7 +265,7 @@ async def scrape_property_dealers(
                     if not name:
                         # Fallback from URL
                         match = re.search(r'/maps/place/([^/]+)/', url)
-                        name = urllib.parse.unquote(match.group(1)).replace('+', ' ') if match else "Unknown Dealer"
+                        name = urllib.parse.unquote(match.group(1)).replace('+', ' ') if match else "Business"
                         
                     # Phone
                     phone_el = detail_page.locator('button[data-item-id*="phone:"], button[aria-label*="Phone:"]')
@@ -282,7 +291,7 @@ async def scrape_property_dealers(
                     
                     # Category / Business Type
                     cat_el = detail_page.locator('button[jsaction*="category"]')
-                    category = await cat_el.first.inner_text() if await cat_el.count() > 0 else "Real Estate Agency"
+                    category = await cat_el.first.inner_text() if await cat_el.count() > 0 else "Business"
                     
                     # Email harvesting from website
                     emails = ""
@@ -330,12 +339,12 @@ def export_to_excel(data: list[dict], output_path: str, search_query: str = "") 
     
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Property Dealers Leads"
+    ws.title = "Business Leads"
     
     # Title Block
     ws.merge_cells("A1:I1")
     title_cell = ws["A1"]
-    title_cell.value = f"Real Estate & Property Dealers Directory - {search_query.title() if search_query else 'Leads'}"
+    title_cell.value = f"Business Directory - {search_query.title() if search_query else 'Leads'}"
     title_cell.font = Font(name="Segoe UI", size=15, bold=True, color="FFFFFF")
     title_cell.fill = PatternFill(start_color="1B365D", end_color="1B365D", fill_type="solid")
     title_cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -432,7 +441,7 @@ def export_to_excel(data: list[dict], output_path: str, search_query: str = "") 
     # Auto-adjust column widths
     column_widths = {
         1: 8,   # S.No
-        2: 34,  # Dealer Name
+        2: 34,  # Business Name
         3: 18,  # Phone Number
         4: 28,  # Email
         5: 32,  # Website

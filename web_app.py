@@ -1,5 +1,5 @@
 """
-Web-Based GUI Interface for Property Dealer Scraper, Master CRM & WhatsApp Outreach
+Web-Based GUI Interface for Multi-Niche Scraper, Master CRM & WhatsApp Outreach + Follow-up Engine
 Powered by Flask + Server-Sent Events (SSE) for real-time live progress.
 Accessible via web browser from localhost or any device on the local network.
 """
@@ -25,6 +25,7 @@ if sys.stdout.encoding != 'utf-8':
 
 from scraper import scrape_property_dealers, export_to_excel
 import crm_manager
+import system_backup
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'proplead-outreach-secret-key-change-in-production')
@@ -32,6 +33,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'proplead-outreach-secre
 # Base Directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SENT_HISTORY_FILE = os.path.join(BASE_DIR, "sent_history.json")
+DEAD_LEADS_FILE = os.path.join(BASE_DIR, "dead_leads.json")
 
 
 def get_local_ip():
@@ -51,6 +53,17 @@ def load_sent_history():
     if os.path.exists(SENT_HISTORY_FILE):
         try:
             with open(SENT_HISTORY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+
+def load_dead_leads():
+    """Load Dead Leads JSON if exists."""
+    if os.path.exists(DEAD_LEADS_FILE):
+        try:
+            with open(DEAD_LEADS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return {}
@@ -90,30 +103,42 @@ HTML_TEMPLATE = """
                 </div>
                 <div>
                     <h1 class="text-base sm:text-lg font-bold tracking-tight">PropLead &amp; WhatsApp Hub</h1>
-                    <p class="text-[11px] text-indigo-300">Scraper &bull; Master CRM &bull; WhatsApp Outreach</p>
+                    <p class="text-[11px] text-indigo-300">Scraper &bull; Master CRM &bull; WhatsApp Outreach &bull; Follow-up</p>
                 </div>
             </div>
 
             <!-- Tab Switcher -->
-            <div class="flex items-center space-x-1.5 bg-indigo-900/70 p-1 rounded-xl border border-indigo-800/80 shadow-inner">
-                <button onclick="switchTab('scraper')" id="tab-btn-scraper" class="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5">
+            <div class="flex items-center space-x-1.5 bg-indigo-900/70 p-1 rounded-xl border border-indigo-800/80 shadow-inner overflow-x-auto">
+                <button onclick="switchTab('scraper')" id="tab-btn-scraper" class="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5 whitespace-nowrap">
                     <i class="fa-solid fa-magnifying-glass text-indigo-200"></i>
                     <span>Scraper</span>
                 </button>
-                <button onclick="switchTab('crm')" id="tab-btn-crm" class="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-indigo-200 hover:text-white transition-all flex items-center space-x-1.5">
+                <button onclick="switchTab('crm')" id="tab-btn-crm" class="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-indigo-200 hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap">
                     <i class="fa-solid fa-database text-indigo-200"></i>
                     <span>Master CRM</span>
                 </button>
-                <button onclick="switchTab('whatsapp')" id="tab-btn-whatsapp" class="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-emerald-300 hover:text-white transition-all flex items-center space-x-1.5">
+                <button onclick="switchTab('whatsapp')" id="tab-btn-whatsapp" class="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-emerald-300 hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap">
                     <i class="fa-brands fa-whatsapp text-emerald-400"></i>
                     <span>WhatsApp Outreach</span>
                 </button>
+                <button onclick="switchTab('followup')" id="tab-btn-followup" class="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-amber-300 hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap">
+                    <i class="fa-solid fa-arrows-rotate text-amber-400"></i>
+                    <span>Follow-ups &amp; Dead Leads</span>
+                </button>
             </div>
 
-            <!-- Network URL Badge -->
-            <div class="hidden md:flex items-center space-x-2 text-xs bg-indigo-900/80 px-3 py-1.5 rounded-lg border border-indigo-700">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-indigo-200">LAN: <strong class="text-white">{{ network_url }}</strong></span>
+            <!-- Reset & Backup Button and LAN Badge -->
+            <div class="flex items-center space-x-2">
+                <button onclick="openResetModal()" class="px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 hover:text-white rounded-lg text-xs font-bold border border-rose-700/60 transition-all flex items-center space-x-1.5 shadow-sm" title="Safely create backup and reset leads/history">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span class="hidden sm:inline">Reset &amp; Backup</span>
+                </button>
+
+                <!-- Network URL Badge -->
+                <div class="hidden lg:flex items-center space-x-2 text-xs bg-indigo-900/80 px-3 py-1.5 rounded-lg border border-indigo-700">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-indigo-200">LAN: <strong class="text-white">{{ network_url }}</strong></span>
+                </div>
             </div>
         </div>
     </header>
@@ -250,89 +275,85 @@ HTML_TEMPLATE = """
                             </label>
                         </div>
 
-                        <button type="submit" id="start-btn" class="inline-flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md hover:shadow-indigo-500/20 transition-all text-sm">
-                            <i class="fa-solid fa-play"></i>
+                        <button type="submit" id="start-btn"
+                            class="inline-flex items-center justify-center space-x-2 px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm transform active:scale-95">
+                            <i class="fa-solid fa-play text-xs"></i>
                             <span>Start Extraction</span>
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Live Progress Box (Hidden by default) -->
-            <div id="progress-container" class="hidden bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-5">
+            <!-- Live Progress Card (Hidden by default) -->
+            <div id="progress-container" class="hidden bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 id="progress-title" class="font-bold text-slate-900 text-base">Extracting leads...</h3>
-                        <p id="progress-sub" class="text-xs text-slate-500 mt-0.5">Automated headless browser initialized</p>
+                        <h3 id="progress-title" class="text-base font-bold text-slate-900">Extraction in Progress...</h3>
+                        <p id="progress-sub" class="text-xs text-slate-500 mt-0.5">Initializing automated browser session...</p>
                     </div>
                     <span id="progress-percent" class="text-sm font-extrabold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">0%</span>
                 </div>
 
                 <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                    <div id="progress-bar" class="bg-indigo-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
 
-                <!-- Live Log Feed -->
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Scraper Logs</span>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Activity Feed</span>
                         <span class="text-[11px] text-emerald-600 font-semibold flex items-center">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping mr-1.5"></span> Live
                         </span>
                     </div>
                     <div id="live-logs" class="log-box bg-slate-900 text-slate-200 p-4 rounded-xl font-mono text-xs h-48 overflow-y-auto space-y-1 border border-slate-800">
-                        <!-- Populated by SSE -->
+                        <!-- Streamed live logs -->
                     </div>
                 </div>
             </div>
 
-            <!-- Completion & Download Banner (Hidden by default) -->
-            <div id="completion-box" class="hidden bg-emerald-50 rounded-2xl p-6 sm:p-8 border border-emerald-200 space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-sm">
-                            <i class="fa-solid fa-check"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-emerald-950">Extraction Finished Successfully!</h3>
-                            <p id="completion-summary" class="text-xs sm:text-sm text-emerald-800 mt-0.5">Processed leads with contacts and ratings.</p>
-                        </div>
+            <!-- Extraction Completed Banner -->
+            <div id="completion-box" class="hidden p-6 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-md shadow-emerald-500/20">
+                        <i class="fa-solid fa-check"></i>
                     </div>
-
-                    <!-- Action Downloads & Switch to WhatsApp -->
-                    <div class="flex flex-wrap items-center gap-3">
-                        <a id="btn-download-excel" href="#" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-all flex items-center space-x-2">
-                            <i class="fa-solid fa-file-excel"></i>
-                            <span>Download Excel (.xlsx)</span>
-                        </a>
-                        <a id="btn-download-csv" href="#" class="px-4 py-2.5 bg-white text-emerald-800 hover:bg-emerald-100 font-bold text-xs sm:text-sm rounded-xl border border-emerald-300 shadow-sm transition-all flex items-center space-x-2">
-                            <i class="fa-solid fa-file-csv"></i>
-                            <span>CSV</span>
-                        </a>
-                        <button onclick="switchTab('whatsapp')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-all flex items-center space-x-2">
-                            <i class="fa-brands fa-whatsapp"></i>
-                            <span>Send via WhatsApp</span>
-                        </button>
+                    <div>
+                        <h3 class="text-base font-bold text-emerald-950">Extraction Finished Successfully!</h3>
+                        <p id="completion-summary" class="text-xs text-emerald-700 mt-0.5">Harvested 0 leads.</p>
                     </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a id="btn-download-excel" href="#" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition-all">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Download Excel (.xlsx)</span>
+                    </a>
+                    <a id="btn-download-csv" href="#" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition-all">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>CSV</span>
+                    </a>
+                    <button onclick="switchTab('whatsapp')" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition-all">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span>Send via WhatsApp</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Live Session Preview Table -->
-            <div id="results-table-container" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
+            <!-- Results Preview Table -->
+            <div id="results-table-container" class="hidden bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-slate-900 text-base">Session Leads Preview</h3>
-                    <span id="results-count-badge" class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2.5 py-1 rounded-lg">0 Leads</span>
+                    <h3 class="text-base font-bold text-slate-900">Session Leads Preview</h3>
+                    <span id="results-count-badge" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-lg">0 Leads</span>
                 </div>
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                                 <th class="p-3">#</th>
-                                <th class="p-3">Business / Agency Name</th>
+                                <th class="p-3">Agency Name</th>
                                 <th class="p-3">Phone</th>
                                 <th class="p-3">Email Address</th>
                                 <th class="p-3">Website</th>
-                                <th class="p-3">Full Address</th>
+                                <th class="p-3">Address</th>
                                 <th class="p-3">Rating</th>
                                 <th class="p-3 text-center">Action</th>
                             </tr>
@@ -349,87 +370,58 @@ HTML_TEMPLATE = """
         <!-- =================== TAB 2: MASTER CRM =================== -->
         <div id="tab-crm" class="hidden space-y-8">
             
-            <!-- CRM Header & KPI Stats -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">Total CRM Leads</p>
-                        <h4 id="kpi-total" class="text-2xl font-extrabold text-slate-900 mt-0.5">0</h4>
-                    </div>
+            <!-- CRM KPI Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total CRM Leads</p>
+                    <h4 id="kpi-total" class="text-2xl font-extrabold text-slate-900 mt-1">0</h4>
+                    <p class="text-[11px] text-indigo-600 font-medium mt-1">Deduplicated Master DB</p>
                 </div>
-
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-phone"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">With Verified Phone</p>
-                        <h4 id="kpi-phone" class="text-2xl font-extrabold text-slate-900 mt-0.5">0</h4>
-                    </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">With Phone Number</p>
+                    <h4 id="kpi-phone" class="text-2xl font-extrabold text-emerald-600 mt-1">0</h4>
+                    <p class="text-[11px] text-slate-400 mt-1">Ready for WhatsApp</p>
                 </div>
-
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-envelope"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">With Business Email</p>
-                        <h4 id="kpi-email" class="text-2xl font-extrabold text-slate-900 mt-0.5">0</h4>
-                    </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">With Verified Email</p>
+                    <h4 id="kpi-email" class="text-2xl font-extrabold text-blue-600 mt-1">0</h4>
+                    <p class="text-[11px] text-slate-400 mt-1">Email Outreach Ready</p>
                 </div>
-
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-globe"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">With Website Link</p>
-                        <h4 id="kpi-web" class="text-2xl font-extrabold text-slate-900 mt-0.5">0</h4>
-                    </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">With Live Website</p>
+                    <h4 id="kpi-web" class="text-2xl font-extrabold text-purple-600 mt-1">0</h4>
+                    <p class="text-[11px] text-slate-400 mt-1">Has Existing Online Presence</p>
                 </div>
             </div>
 
-            <!-- CRM Actions & Filters -->
+            <!-- CRM Filter & Search Bar -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="relative flex-1 max-w-md">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-solid fa-magnifying-glass"></i>
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <input type="text" id="crm-search" oninput="filterCrmTable()" placeholder="Search name, phone, area, niche..."
+                                class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:border-indigo-500">
                         </div>
-                        <input type="text" id="crm-search" oninput="filterCrmTable()" placeholder="Search by agency, phone, city, or status..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none">
-                    </div>
 
-                    <div class="flex flex-wrap items-center gap-3">
-                        <select id="crm-niche-filter" onchange="filterCrmTable()" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white outline-none">
-                            <option value="">All Niches (Tier 1-3)</option>
-                            <optgroup label="👑 TIER 1: High-Ticket">
-                                <option value="property">Property Dealers / Real Estate</option>
-                                <option value="interior">Interior Designers</option>
-                                <option value="architect">Architects</option>
-                                <option value="builder">Builders & Developers</option>
-                                <option value="banquet">Banquet Halls</option>
-                            </optgroup>
-                            <optgroup label="🥈 TIER 2: Professional Services">
-                                <option value="dental">Dental Clinics</option>
-                                <option value="clinic">Hospitals / Polyclinics</option>
-                                <option value="immigration">Immigration Consultants</option>
-                                <option value="coaching">Coaching Institutes</option>
-                                <option value="wedding">Wedding Planners</option>
-                            </optgroup>
-                            <optgroup label="🥉 TIER 3: Commercial">
-                                <option value="hotel">Hotels & Resorts</option>
-                                <option value="car">Car Dealers</option>
-                                <option value="modification">Car Modification</option>
-                                <option value="solar">Solar Panel Dealers</option>
-                                <option value="furniture">Furniture Showrooms</option>
-                                <option value="travel">Travel Agencies</option>
-                            </optgroup>
+                        <select id="crm-niche-filter" onchange="filterCrmTable()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none bg-white">
+                            <option value="">All Niches (Any)</option>
+                            <option value="property">Property Dealers</option>
+                            <option value="interior">Interior Designers</option>
+                            <option value="architect">Architects</option>
+                            <option value="builder">Builders &amp; Developers</option>
+                            <option value="banquet">Banquet Halls</option>
+                            <option value="dental">Dental Clinics</option>
+                            <option value="hospital">Hospital Clinics</option>
+                            <option value="immigration">Immigration Consultants</option>
+                            <option value="coaching">Coaching Institutes</option>
+                            <option value="hotel">Hotels &amp; Resorts</option>
+                            <option value="car">Car Dealers</option>
                         </select>
 
-                        <select id="crm-status-filter" onchange="filterCrmTable()" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white outline-none">
+                        <select id="crm-status-filter" onchange="filterCrmTable()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none bg-white">
                             <option value="">All CRM Statuses</option>
                             <option value="New Lead">New Lead</option>
                             <option value="Contacted">Contacted</option>
@@ -439,13 +431,15 @@ HTML_TEMPLATE = """
                             <option value="Not Interested">Not Interested</option>
                         </select>
 
-                        <select id="crm-wa-filter" onchange="filterCrmTable()" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white outline-none">
-                            <option value="">All WhatsApp Status</option>
-                            <option value="sent">WhatsApp Contacted</option>
-                            <option value="unsent">WhatsApp Unsent</option>
+                        <select id="crm-wa-filter" onchange="filterCrmTable()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none bg-white">
+                            <option value="">WhatsApp Outreach: All</option>
+                            <option value="sent">Already Messaged</option>
+                            <option value="unsent">Not Messaged Yet</option>
                         </select>
+                    </div>
 
-                        <a href="/download/master-crm" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm transition-all flex items-center space-x-2">
+                    <div>
+                        <a href="/download/master-crm" class="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all whitespace-nowrap">
                             <i class="fa-solid fa-download"></i>
                             <span>Download Full CRM (.xlsx)</span>
                         </a>
@@ -617,7 +611,7 @@ HTML_TEMPLATE = """
                         <h3 class="font-bold text-slate-900 text-base">Campaign Audience Preview</h3>
                         <p id="wa-dryrun-meta" class="text-xs text-slate-500 mt-0.5">Eligible leads ready for outreach</p>
                     </div>
-                    <span id="wa-dryrun-ready-badge" class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-lg">22 Ready</span>
+                    <span id="wa-dryrun-ready-badge" class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-lg">0 Ready</span>
                 </div>
 
                 <div id="wa-dryrun-samples" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -662,6 +656,227 @@ HTML_TEMPLATE = """
 
         </div>
 
+        <!-- =================== TAB 4: FOLLOW-UPS & DEAD LEADS =================== -->
+        <div id="tab-followup" class="hidden space-y-8">
+
+            <!-- Follow-up Metrics KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-semibold">Needs Follow-up 1</p>
+                        <h4 id="fu-kpi-fu1" class="text-2xl font-extrabold text-amber-600 mt-0.5">0</h4>
+                        <p class="text-[10px] text-slate-400">Gentle bump (seen/unseen)</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-semibold">Needs Follow-up 2 (Final)</p>
+                        <h4 id="fu-kpi-fu2" class="text-2xl font-extrabold text-purple-600 mt-0.5">0</h4>
+                        <p class="text-[10px] text-slate-400">Last chance before Dead List</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-semibold">Client Replied (Hot!)</p>
+                        <h4 id="fu-kpi-replied" class="text-2xl font-extrabold text-emerald-600 mt-0.5">0</h4>
+                        <p class="text-[10px] text-emerald-600 font-semibold">Active conversations</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-skull"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-semibold">Dead Leads Vault</p>
+                        <h4 id="fu-kpi-dead" class="text-2xl font-extrabold text-rose-600 mt-0.5">0</h4>
+                        <p class="text-[10px] text-rose-600 font-semibold">Strictly blacklisted</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow-up Launch & Chat Scanner Card -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-100 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center space-x-2">
+                            <span>Smart WhatsApp Follow-up &amp; Dead Leads Engine</span>
+                            <span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-md">Anti-Spam Max 2</span>
+                        </h2>
+                        <p class="text-sm text-slate-500 mt-1">Tracks message views (blue ticks), replies, and auto-sends up to 2 follow-ups before moving dead contacts into the Blacklist Vault.</p>
+                    </div>
+
+                    <!-- Scan Chats Button -->
+                    <div class="flex items-center space-x-3">
+                        <button id="btn-scan-chats" onclick="scanWhatsAppChats()" class="inline-flex items-center space-x-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs sm:text-sm font-bold rounded-xl border border-indigo-200 transition-all shadow-sm">
+                            <i class="fa-solid fa-satellite-dish text-indigo-600"></i>
+                            <span>Scan WhatsApp for Replies &amp; Blue Ticks</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scanner Live Notification Status Banner -->
+                <div id="scan-status-box" class="hidden p-4 rounded-xl text-xs font-semibold"></div>
+
+                <!-- Follow-up Campaign Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-700">Follow-up Batch Size:</label>
+                        <input type="number" id="fu-batch-limit" value="10" min="1" max="50" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:border-indigo-500">
+                        <p class="text-[10px] text-slate-400">Recommended 5-15 per session</p>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-700">Min Anti-Ban Delay (s):</label>
+                        <input type="number" id="fu-min-delay" value="25" min="15" max="120" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs outline-none">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-700">Max Anti-Ban Delay (s):</label>
+                        <input type="number" id="fu-max-delay" value="50" min="25" max="180" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs outline-none">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-700">Sender Signature:</label>
+                        <input type="text" id="fu-sender-name" value="Deepaktusir" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs outline-none">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div class="text-xs text-slate-500">
+                        <i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i>
+                        <span>Contacts who already completed 2 follow-ups or replied are strictly protected and excluded.</span>
+                    </div>
+                    <button type="button" id="btn-start-followup" onclick="startFollowupCampaign()" class="inline-flex items-center space-x-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-md hover:shadow-amber-500/20 transition-all text-xs sm:text-sm">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Launch Follow-up Batch</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Follow-up Live Execution Container (Hidden by default) -->
+            <div id="fu-live-container" class="hidden bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 id="fu-live-title" class="font-bold text-slate-900 text-base">Follow-up Batch Running...</h3>
+                        <p id="fu-live-sub" class="text-xs text-slate-500 mt-0.5">Dispatching smart contextual follow-up messages</p>
+                    </div>
+                    <span id="fu-live-counter" class="text-sm font-extrabold text-amber-600 bg-amber-50 px-3 py-1 rounded-lg">0 / 0</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div id="fu-progress-bar" class="bg-amber-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+
+                <!-- Delay Countdown Badge -->
+                <div id="fu-countdown-badge" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                    <span id="fu-countdown-text">Anti-ban safe cooldown: 35s remaining...</span>
+                </div>
+
+                <!-- Live Log Feed -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Follow-up Live Logs</span>
+                    </div>
+                    <div id="fu-live-logs" class="log-box bg-slate-900 text-slate-200 p-4 rounded-xl font-mono text-xs h-48 overflow-y-auto space-y-1 border border-slate-800">
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Switcher Tabs: 1) Pending Follow-up Queue, 2) Dead Leads Vault -->
+            <div class="flex items-center space-x-2 border-b border-slate-200 pb-2">
+                <button onclick="switchFollowupSubView('queue')" id="subbtn-fu-queue" class="px-4 py-2 font-bold text-xs rounded-xl bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Pending Follow-up Queue (<span id="count-queue-badge">0</span>)</span>
+                </button>
+                <button onclick="switchFollowupSubView('dead')" id="subbtn-fu-dead" class="px-4 py-2 font-bold text-xs rounded-xl text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-skull text-rose-500"></i>
+                    <span>Dead Leads Blacklist Vault (<span id="count-dead-badge">0</span>)</span>
+                </button>
+            </div>
+
+            <!-- SUB-VIEW 1: FOLLOW-UP QUEUE TABLE -->
+            <div id="subview-fu-queue" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Leads Awaiting Next Follow-up</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Contacts who were sent an initial pitch and haven't replied yet.</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                                <th class="p-3">#</th>
+                                <th class="p-3">Business / Agency</th>
+                                <th class="p-3">Phone</th>
+                                <th class="p-3">WhatsApp Read Receipt</th>
+                                <th class="p-3">Next Action</th>
+                                <th class="p-3">Waiting Time</th>
+                                <th class="p-3 text-center">Quick Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fu-queue-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SUB-VIEW 2: DEAD LEADS BLACKLIST VAULT -->
+            <div id="subview-fu-dead" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+                
+                <!-- Notice Banner -->
+                <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start space-x-3">
+                    <div class="w-6 h-6 rounded-lg bg-rose-500 text-white flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                        <i class="fa-solid fa-ban"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-rose-950">Strict Outreach Blacklist Vault</h4>
+                        <p class="mt-0.5 text-rose-800 leading-relaxed">
+                            These numbers completed all follow-up cycles without any reply or were identified as unresponsive. 
+                            <strong>They are strictly blacklisted from all future scraper campaigns and cold pitches.</strong>
+                            <br>
+                            <em>Auto-Revival:</em> If any contact from this list replies back on WhatsApp at any time, they are automatically unlocked and removed from the dead list! You can also manually revive them using the button below.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                                <th class="p-3">#</th>
+                                <th class="p-3">Business / Lead Name</th>
+                                <th class="p-3">Phone Number</th>
+                                <th class="p-3">Blacklist Reason</th>
+                                <th class="p-3">Date Added</th>
+                                <th class="p-3 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fu-dead-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
     </main>
 
     <!-- Send Test Message Modal -->
@@ -692,6 +907,69 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
+    <!-- Reset & Backup Modal -->
+    <div id="reset-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <span>System Reset &amp; Auto-Backup</span>
+                </h3>
+                <button onclick="closeResetModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 leading-relaxed">
+                <strong>Safety Guarantee:</strong> Before resetting, a complete timestamped ZIP archive containing all current scraped leads, Master CRM Excel files, WhatsApp sent history, and dead leads will be automatically created in <code>./backups/</code>.
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-600">
+                <p class="font-semibold text-slate-700">Choose action:</p>
+                
+                <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                    <div>
+                        <h4 class="font-bold text-slate-800">1. Instant Backup Only</h4>
+                        <p class="text-[11px] text-slate-500">Creates a full ZIP archive without deleting any current leads or history.</p>
+                    </div>
+                    <button onclick="doCreateBackupOnly()" id="btn-do-backup" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg whitespace-nowrap shadow text-xs">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Backup Now
+                    </button>
+                </div>
+
+                <div class="p-3.5 rounded-xl border border-rose-200 bg-rose-50 flex items-center justify-between gap-3">
+                    <div>
+                        <h4 class="font-bold text-rose-950">2. Full Backup + Reset Workspace</h4>
+                        <p class="text-[11px] text-rose-700">Creates backup archive first, then resets CRM, leads &amp; history to clean state.</p>
+                    </div>
+                    <button onclick="doBackupAndReset()" id="btn-do-reset" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg whitespace-nowrap shadow text-xs">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Backup &amp; Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status / Result Message -->
+            <div id="reset-status-box" class="hidden p-3.5 rounded-xl text-xs"></div>
+
+            <!-- Existing Backups List -->
+            <div class="pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-700">Saved System Backups</span>
+                    <button onclick="loadBackupsList()" class="text-[11px] text-indigo-600 font-semibold hover:underline">Refresh</button>
+                </div>
+                <div id="backups-list-box" class="max-h-28 overflow-y-auto space-y-1.5 text-xs">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end pt-1">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
         PropLead &amp; WhatsApp Hub &bull; Unified Real Estate Intelligence &amp; Outreach Command Center
@@ -701,35 +979,45 @@ HTML_TEMPLATE = """
     <script>
         let allCrmRecords = [];
         let waFiles = [];
+        let fuQueueList = [];
+        let fuDeadList = {};
 
         function switchTab(tab) {
             const tabScraper = document.getElementById('tab-scraper');
             const tabCrm = document.getElementById('tab-crm');
             const tabWa = document.getElementById('tab-whatsapp');
+            const tabFu = document.getElementById('tab-followup');
 
             const btnScraper = document.getElementById('tab-btn-scraper');
             const btnCrm = document.getElementById('tab-btn-crm');
             const btnWa = document.getElementById('tab-btn-whatsapp');
+            const btnFu = document.getElementById('tab-btn-followup');
 
             tabScraper.classList.add('hidden');
             tabCrm.classList.add('hidden');
             tabWa.classList.add('hidden');
+            tabFu.classList.add('hidden');
 
-            btnScraper.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-indigo-200 hover:text-white transition-all flex items-center space-x-1.5";
-            btnCrm.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-indigo-200 hover:text-white transition-all flex items-center space-x-1.5";
-            btnWa.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-emerald-300 hover:text-white transition-all flex items-center space-x-1.5";
+            btnScraper.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-indigo-200 hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap";
+            btnCrm.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-indigo-200 hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap";
+            btnWa.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-emerald-300 hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap";
+            btnFu.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg text-amber-300 hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap";
 
             if (tab === 'scraper') {
                 tabScraper.classList.remove('hidden');
-                btnScraper.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5";
+                btnScraper.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5 whitespace-nowrap";
             } else if (tab === 'crm') {
                 tabCrm.classList.remove('hidden');
-                btnCrm.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5";
+                btnCrm.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5 whitespace-nowrap";
                 loadCrmData();
             } else if (tab === 'whatsapp') {
                 tabWa.classList.remove('hidden');
-                btnWa.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-emerald-600 text-white shadow transition-all flex items-center space-x-1.5";
+                btnWa.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-emerald-600 text-white shadow transition-all flex items-center space-x-1.5 whitespace-nowrap";
                 loadWhatsAppStatus();
+            } else if (tab === 'followup') {
+                tabFu.classList.remove('hidden');
+                btnFu.className = "px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-amber-600 text-white shadow transition-all flex items-center space-x-1.5 whitespace-nowrap";
+                loadFollowupData();
             }
         }
 
@@ -1035,7 +1323,7 @@ HTML_TEMPLATE = """
                     }
 
                     document.getElementById('wa-dryrun-meta').innerText = 
-                        `File: ${res.filename} | Total: ${res.totalInFile} | No Website: ${res.filteredCount} | Already Contacted: ${res.alreadySent}`;
+                        `File: ${res.filename} | Total: ${res.totalInFile} | No Website: ${res.filteredCount} | Already Sent: ${res.alreadySent} | Dead Skipped: ${res.deadSkipped || 0}`;
                     document.getElementById('wa-dryrun-ready-badge').innerText = `${res.readyToSend} Ready to Message`;
 
                     const container = document.getElementById('wa-dryrun-samples');
@@ -1073,7 +1361,7 @@ HTML_TEMPLATE = """
             const onlyNoWeb = document.getElementById('wa-filter-noweb').checked;
             const senderName = document.getElementById('wa-sender-name').value || 'Deepaktusir';
 
-            if (!confirm(`Start live WhatsApp campaign to message up to ${batchLimit} property dealers from '${fileName}'?\\n\\nAnti-ban safe delay: ${minDelay}s - ${maxDelay}s.`)) {
+            if (!confirm(`Start live WhatsApp campaign to message up to ${batchLimit} leads from '${fileName}'?\\n\\nAnti-ban safe delay: ${minDelay}s - ${maxDelay}s.`)) {
                 return;
             }
 
@@ -1130,13 +1418,310 @@ HTML_TEMPLATE = """
                     eventSource.close();
                     document.getElementById('wa-countdown-badge').classList.add('hidden');
                     document.getElementById('wa-progress-bar').style.width = '100%';
-                    appendLog('wa-live-logs', `\n🏁 ${data.message}`);
+                    appendLog('wa-live-logs', `\\n🏁 ${data.message}`);
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
                     loadWhatsAppStatus();
                 } else if (data.type === 'error') {
                     eventSource.close();
                     appendLog('wa-live-logs', `[ERROR] ${data.message}`);
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            };
+
+            eventSource.onerror = function() {
+                eventSource.close();
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            };
+        }
+
+        /* ------------------ FOLLOW-UPS & DEAD LEADS LOGIC ------------------ */
+        function switchFollowupSubView(view) {
+            const vQueue = document.getElementById('subview-fu-queue');
+            const vDead = document.getElementById('subview-fu-dead');
+            const bQueue = document.getElementById('subbtn-fu-queue');
+            const bDead = document.getElementById('subbtn-fu-dead');
+
+            if (view === 'queue') {
+                vQueue.classList.remove('hidden');
+                vDead.classList.add('hidden');
+                bQueue.className = "px-4 py-2 font-bold text-xs rounded-xl bg-indigo-600 text-white shadow transition-all flex items-center space-x-1.5";
+                bDead.className = "px-4 py-2 font-bold text-xs rounded-xl text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5";
+            } else {
+                vQueue.classList.add('hidden');
+                vDead.classList.remove('hidden');
+                bDead.className = "px-4 py-2 font-bold text-xs rounded-xl bg-rose-600 text-white shadow transition-all flex items-center space-x-1.5";
+                bQueue.className = "px-4 py-2 font-bold text-xs rounded-xl text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5";
+            }
+        }
+
+        function loadFollowupData() {
+            // Fetch stats
+            fetch('/api/whatsapp/status')
+                .then(res => res.json())
+                .then(data => {
+                    const stats = data.stats || {};
+                    document.getElementById('fu-kpi-fu1').innerText = stats.needsFollowUp1 || 0;
+                    document.getElementById('fu-kpi-fu2').innerText = stats.needsFollowUp2 || 0;
+                    document.getElementById('fu-kpi-replied').innerText = stats.clientReplied || 0;
+                    document.getElementById('fu-kpi-dead').innerText = stats.deadCount || 0;
+                })
+                .catch(err => console.error(err));
+
+            // Fetch follow-up queue
+            fetch('/api/whatsapp/followup-queue')
+                .then(res => res.json())
+                .then(data => {
+                    fuQueueList = data.queue || [];
+                    document.getElementById('count-queue-badge').innerText = fuQueueList.length;
+                    renderFollowupQueueTable(fuQueueList);
+                })
+                .catch(err => console.error(err));
+
+            // Fetch dead leads
+            fetch('/api/whatsapp/dead-leads')
+                .then(res => res.json())
+                .then(data => {
+                    fuDeadList = data.deadLeads || {};
+                    const deadCount = Object.keys(fuDeadList).length;
+                    document.getElementById('count-dead-badge').innerText = deadCount;
+                    renderDeadLeadsTable(fuDeadList);
+                })
+                .catch(err => console.error(err));
+        }
+
+        function renderFollowupQueueTable(queue) {
+            const tbody = document.getElementById('fu-queue-table-body');
+            tbody.innerHTML = '';
+
+            if (queue.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">No leads currently in the follow-up queue.</td></tr>`;
+                return;
+            }
+
+            queue.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                const isSeen = item.chat_seen;
+                const fuNum = item.next_followup_num;
+                const hoursWait = item.hours_elapsed || 0;
+                const waLink = `https://wa.me/${item.phone}?text=Hi`;
+
+                tr.innerHTML = `
+                    <td class="p-3 text-slate-400 font-mono">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-900">${item.name || 'Business'}</td>
+                    <td class="p-3 font-semibold text-slate-700 font-mono">${item.phone}</td>
+                    <td class="p-3">
+                        ${isSeen ? `
+                            <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md font-bold text-[11px]">
+                                <i class="fa-solid fa-check-double text-blue-600"></i>
+                                <span>Seen (Blue Tick)</span>
+                            </span>
+                        ` : `
+                            <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-md font-medium text-[11px]">
+                                <i class="fa-solid fa-check text-slate-400"></i>
+                                <span>Unopened / Delivered</span>
+                            </span>
+                        `}
+                    </td>
+                    <td class="p-3">
+                        ${fuNum === 1 ? `
+                            <span class="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded-md border border-amber-200 text-[11px]">Follow-up #1 (Bump)</span>
+                        ` : `
+                            <span class="px-2 py-0.5 bg-purple-50 text-purple-700 font-bold rounded-md border border-purple-200 text-[11px]">Follow-up #2 (Breakup / Final)</span>
+                        `}
+                    </td>
+                    <td class="p-3 text-slate-500 font-medium">${hoursWait} hrs ago</td>
+                    <td class="p-3 text-center">
+                        <a href="${waLink}" target="_blank" class="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg font-bold text-[11px] transition-all">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <span>Chat</span>
+                        </a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderDeadLeadsTable(deadLeads) {
+            const tbody = document.getElementById('fu-dead-table-body');
+            tbody.innerHTML = '';
+
+            const keys = Object.keys(deadLeads);
+            if (keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Dead leads vault is empty.</td></tr>`;
+                return;
+            }
+
+            keys.forEach((phone, idx) => {
+                const item = deadLeads[phone];
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                const dateStr = item.added_at ? new Date(item.added_at).toLocaleString() : '-';
+
+                tr.innerHTML = `
+                    <td class="p-3 text-slate-400 font-mono">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-900">${item.name || 'Unknown'}</td>
+                    <td class="p-3 font-semibold text-slate-700 font-mono">${item.phone || phone}</td>
+                    <td class="p-3">
+                        <span class="px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-md font-semibold text-[11px]">
+                            ${item.reason || 'Max 2 follow-ups with no reply'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-500">${dateStr}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="reviveLead('${item.phone || phone}')" class="inline-flex items-center space-x-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] shadow transition-all">
+                            <i class="fa-solid fa-arrow-rotate-left"></i>
+                            <span>Revive Lead</span>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function reviveLead(phone) {
+            if (!confirm(`Revive lead '${phone}'? They will be removed from the Dead Leads list and restored to active CRM.`)) {
+                return;
+            }
+
+            fetch('/api/whatsapp/revive-lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    alert(`✅ Lead ${phone} successfully revived and unblacklisted!`);
+                    loadFollowupData();
+                } else {
+                    alert(`Failed to revive: ${res.error || 'Unknown error'}`);
+                }
+            })
+            .catch(err => alert(`Error: ${err.message}`));
+        }
+
+        function scanWhatsAppChats() {
+            const btn = document.getElementById('btn-scan-chats');
+            const statusBox = document.getElementById('scan-status-box');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-600"></i><span>Scanning WhatsApp Chats...</span>`;
+            statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200 block";
+            statusBox.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-ping"></span>
+                    <span>Connecting to WhatsApp Web, inspecting read receipts (blue ticks) and detecting replies... Please wait 10-20 seconds.</span>
+                </div>
+            `;
+
+            fetch('/api/whatsapp/scan-chats')
+                .then(res => res.json())
+                .then(res => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-satellite-dish text-indigo-600"></i><span>Scan WhatsApp for Replies &amp; Blue Ticks</span>`;
+
+                    if (res.type === 'error') {
+                        statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
+                        statusBox.innerHTML = `❌ Error during scan: ${res.message}`;
+                        return;
+                    }
+
+                    statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+                    statusBox.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span>✅ <strong>Scan Finished!</strong> Found <strong>${res.updatedReplies || 0}</strong> client replies, <strong>${res.updatedSeen || 0}</strong> seen messages (blue ticks), and auto-revived <strong>${res.revivedCount || 0}</strong> dead leads.</span>
+                        </div>
+                    `;
+
+                    loadFollowupData();
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-satellite-dish text-indigo-600"></i><span>Scan WhatsApp for Replies &amp; Blue Ticks</span>`;
+                    statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
+                    statusBox.innerHTML = `❌ Scan failed: ${err.message}`;
+                });
+        }
+
+        function startFollowupCampaign() {
+            const batchLimit = document.getElementById('fu-batch-limit').value || '10';
+            const minDelay = document.getElementById('fu-min-delay').value || '25';
+            const maxDelay = document.getElementById('fu-max-delay').value || '50';
+            const senderName = document.getElementById('fu-sender-name').value || 'Deepaktusir';
+
+            if (fuQueueList.length === 0) {
+                alert('No leads are currently pending in the follow-up queue!');
+                return;
+            }
+
+            if (!confirm(`Start automated Follow-up outreach for up to ${batchLimit} leads?\\n\\nAnti-ban safe delay: ${minDelay}s - ${maxDelay}s.\\nNote: Leads reaching 2 follow-ups with no reply will be moved to Dead List.`)) {
+                return;
+            }
+
+            const btn = document.getElementById('btn-start-followup');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const container = document.getElementById('fu-live-container');
+            container.classList.remove('hidden');
+            document.getElementById('fu-live-logs').innerHTML = '';
+            document.getElementById('fu-progress-bar').style.width = '2%';
+            document.getElementById('fu-live-counter').innerText = 'Starting...';
+
+            appendLog('fu-live-logs', `[Init] Connecting to WhatsApp Web for Follow-up dispatch...`);
+
+            const params = new URLSearchParams({
+                batch: batchLimit,
+                min_delay: minDelay,
+                max_delay: maxDelay,
+                sender: senderName
+            });
+
+            const eventSource = new EventSource(`/api/whatsapp/followup/stream?${params.toString()}`);
+
+            eventSource.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+
+                if (data.type === 'log') {
+                    appendLog('fu-live-logs', data.message);
+                } else if (data.type === 'followup_start') {
+                    appendLog('fu-live-logs', `[Batch] Target: ${data.batchSize} follow-up contacts (out of ${data.totalQueue} ready)`);
+                    document.getElementById('fu-live-counter').innerText = `0 / ${data.batchSize}`;
+                } else if (data.type === 'followup_progress') {
+                    document.getElementById('fu-live-counter').innerText = `${data.index} / ${data.total}`;
+                    const pct = Math.round((data.index / data.total) * 100);
+                    document.getElementById('fu-progress-bar').style.width = `${pct}%`;
+                    const seenTag = data.isSeen ? '[SEEN/BLUE TICK]' : '[UNSEEN/BUMP]';
+                    appendLog('fu-live-logs', `[${data.index}/${data.total}] Follow-up #${data.followUpNum} ${seenTag} -> ${data.name} (${data.phone})...`);
+                    document.getElementById('fu-countdown-badge').classList.add('hidden');
+                } else if (data.type === 'followup_result') {
+                    if (data.status === 'success') {
+                        appendLog('fu-live-logs', `  ✅ Successfully sent follow-up #${data.followUpNum} to ${data.name}!`);
+                    } else {
+                        appendLog('fu-live-logs', `  ⚠️ Failed for ${data.name}: ${data.reason}`);
+                    }
+                } else if (data.type === 'delay_start') {
+                    document.getElementById('fu-countdown-badge').classList.remove('hidden');
+                    document.getElementById('fu-countdown-text').innerText = `Anti-ban safe cooldown: ${data.seconds}s remaining...`;
+                } else if (data.type === 'delay_tick') {
+                    document.getElementById('fu-countdown-text').innerText = `Anti-ban safe cooldown: ${data.secondsRemaining}s remaining...`;
+                } else if (data.type === 'followup_complete') {
+                    eventSource.close();
+                    document.getElementById('fu-countdown-badge').classList.add('hidden');
+                    document.getElementById('fu-progress-bar').style.width = '100%';
+                    appendLog('fu-live-logs', `\\n🏁 ${data.message}`);
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    loadFollowupData();
+                } else if (data.type === 'error') {
+                    eventSource.close();
+                    appendLog('fu-live-logs', `[ERROR] ${data.message}`);
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
@@ -1200,6 +1785,136 @@ HTML_TEMPLATE = """
                 statusBox.innerText = `Failed: ${err.message}`;
             });
         }
+
+        /* ------------------ SYSTEM BACKUP & RESET LOGIC ------------------ */
+        function openResetModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+            document.getElementById('reset-status-box').className = 'hidden';
+            loadBackupsList();
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        function loadBackupsList() {
+            const box = document.getElementById('backups-list-box');
+            box.innerHTML = '<div class="text-[11px] text-slate-400 py-1">Loading saved backups...</div>';
+
+            fetch('/api/system/backups')
+                .then(res => res.json())
+                .then(list => {
+                    box.innerHTML = '';
+                    if (!list || list.length === 0) {
+                        box.innerHTML = '<div class="text-[11px] text-slate-400 py-1">No prior backups found.</div>';
+                        return;
+                    }
+                    list.forEach(b => {
+                        const row = document.createElement('div');
+                        row.className = "flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px]";
+                        row.innerHTML = `
+                            <div class="flex items-center space-x-2 truncate">
+                                <i class="fa-solid fa-file-zipper text-indigo-500"></i>
+                                <span class="font-mono text-slate-700 truncate" title="${b.filename}">${b.filename}</span>
+                                <span class="text-slate-400">(${b.size_kb} KB)</span>
+                            </div>
+                            <a href="/download/backup/${b.filename}" class="px-2 py-0.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded font-bold transition-all ml-2 flex items-center space-x-1">
+                                <i class="fa-solid fa-download text-[10px]"></i>
+                                <span>Get</span>
+                            </a>
+                        `;
+                        box.appendChild(row);
+                    });
+                })
+                .catch(() => {
+                    box.innerHTML = '<div class="text-[11px] text-slate-400 py-1">Could not fetch backups.</div>';
+                });
+        }
+
+        function doCreateBackupOnly() {
+            const btn = document.getElementById('btn-do-backup');
+            const statusBox = document.getElementById('reset-status-box');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Creating...`;
+            statusBox.className = "p-3 rounded-xl bg-indigo-50 text-indigo-800 text-xs block";
+            statusBox.innerText = "Creating timestamped ZIP archive of all leads, CRM and history...";
+
+            fetch('/api/system/backup', { method: 'POST' })
+                .then(res => res.json())
+                .then(res => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1"></i> Backup Now`;
+
+                    if (res.success) {
+                        statusBox.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold block";
+                        statusBox.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <span>✅ Backup created successfully: <strong>${res.backup.zip_filename}</strong></span>
+                                <a href="/download/backup/${res.backup.zip_filename}" class="ml-2 px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">Download ZIP</a>
+                            </div>
+                        `;
+                        loadBackupsList();
+                    } else {
+                        statusBox.className = "p-3 rounded-xl bg-rose-50 text-rose-800 text-xs block";
+                        statusBox.innerText = `❌ Backup error: ${res.error}`;
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1"></i> Backup Now`;
+                    statusBox.className = "p-3 rounded-xl bg-rose-50 text-rose-800 text-xs block";
+                    statusBox.innerText = `Error: ${err.message}`;
+                });
+        }
+
+        function doBackupAndReset() {
+            if (!confirm("⚠️ ARE YOU SURE?\\n\\nThis will:\\n1. Create a complete ZIP backup of all current data.\\n2. Reset all leads, Master CRM, and WhatsApp sent history.\\n\\nYou can start fresh with a clean slate.")) {
+                return;
+            }
+
+            const btn = document.getElementById('btn-do-reset');
+            const statusBox = document.getElementById('reset-status-box');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Resetting...`;
+            statusBox.className = "p-3 rounded-xl bg-amber-50 text-amber-800 text-xs block";
+            statusBox.innerText = "Creating full backup archive and resetting workspace...";
+
+            fetch('/api/system/reset', { method: 'POST' })
+                .then(res => res.json())
+                .then(res => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-arrows-rotate mr-1"></i> Backup & Reset`;
+
+                    if (res.success) {
+                        statusBox.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold block";
+                        statusBox.innerHTML = `
+                            <div class="space-y-1">
+                                <div>🎉 <strong>Reset Complete! Workspace is now fresh and clean.</strong></div>
+                                <div class="text-[11px] text-emerald-700 flex items-center justify-between">
+                                    <span>All data safely preserved in: <strong>${res.backup.zip_filename}</strong></span>
+                                    <a href="/download/backup/${res.backup.zip_filename}" class="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">Download ZIP</a>
+                                </div>
+                            </div>
+                        `;
+                        loadBackupsList();
+                        // Refresh current views
+                        loadCrmData();
+                        loadWhatsAppStatus();
+                        loadFollowupData();
+                    } else {
+                        statusBox.className = "p-3 rounded-xl bg-rose-50 text-rose-800 text-xs block";
+                        statusBox.innerText = `❌ Reset error: ${res.error}`;
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-arrows-rotate mr-1"></i> Backup & Reset`;
+                    statusBox.className = "p-3 rounded-xl bg-rose-50 text-rose-800 text-xs block";
+                    statusBox.innerText = `Error: ${err.message}`;
+                });
+        }
     </script>
 </body>
 </html>
@@ -1260,34 +1975,20 @@ def api_master_leads():
 
 
 @app.route('/api/update-lead-status', methods=['POST'])
-def api_update_status():
+def api_update_lead_status():
     data = request.json or {}
     phone = data.get("phone", "")
-    new_status = data.get("status", "")
-    
-    if not phone or not new_status:
-        return jsonify({"success": False, "error": "Missing parameters"}), 400
+    new_status = data.get("status", "New Lead")
+    if not phone:
+        return jsonify({"success": False, "error": "Phone required"}), 400
         
-    records = crm_manager.load_master_records()
-    pk = crm_manager.normalize_phone_key(phone)
-    modified = False
-    
-    for r in records:
-        if crm_manager.normalize_phone_key(r.get("Phone Number", "")) == pk:
-            r["Lead Status"] = new_status
-            modified = True
-            break
-            
-    if modified:
-        crm_manager.save_master_workbook(records)
-        return jsonify({"success": True})
-        
-    return jsonify({"success": False, "error": "Lead not found"}), 404
+    success = crm_manager.update_lead_status(phone, new_status)
+    return jsonify({"success": success})
 
 
 @app.route('/api/scrape/stream')
 def api_scrape_stream():
-    """Server-Sent Events endpoint to stream live scraping progress."""
+    """Server-Sent Events endpoint to stream live scraper progress."""
     city = request.args.get('city', 'South Delhi')
     niche = request.args.get('niche', 'Property dealers')
     max_leads = int(request.args.get('max', 30))
@@ -1295,7 +1996,7 @@ def api_scrape_stream():
     sync_crm = request.args.get('crm', '1') == '1'
     
     target_query = f"{niche} in {city}"
-    
+
     def event_stream():
         msg_queue = queue.Queue()
         
@@ -1325,7 +2026,7 @@ def api_scrape_stream():
                     r["Full Address"] = addr_val
                     r["Address"] = addr_val
 
-                    if not r.get("Category") or r.get("Category") == "Real Estate Agency":
+                    if not r.get("Category") or r.get("Category") in ("Real Estate Agency", "Business"):
                         r["Category"] = niche
                     r["Search Query"] = target_query
                 
@@ -1483,6 +2184,99 @@ def api_whatsapp_campaign_stream():
     return Response(event_stream(), mimetype="text/event-stream")
 
 
+@app.route('/api/whatsapp/followup-queue')
+def api_whatsapp_followup_queue():
+    """Returns the list of contacts currently waiting for a follow-up."""
+    try:
+        cmd = ["node", "whatsapp_runner.js", "--followup-queue"]
+        proc = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=10)
+        for line in proc.stdout.splitlines():
+            if line.startswith("{") and "followup_queue" in line:
+                return jsonify(json.loads(line))
+        return jsonify({"type": "followup_queue", "count": 0, "queue": []})
+    except Exception as e:
+        return jsonify({"type": "error", "message": str(e)}), 500
+
+
+@app.route('/api/whatsapp/dead-leads')
+def api_whatsapp_dead_leads():
+    """Returns the dictionary/list of blacklisted Dead Leads."""
+    try:
+        cmd = ["node", "whatsapp_runner.js", "--dead-leads"]
+        proc = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=10)
+        for line in proc.stdout.splitlines():
+            if line.startswith("{") and "dead_leads" in line:
+                return jsonify(json.loads(line))
+        return jsonify({"type": "dead_leads", "count": 0, "deadLeads": {}})
+    except Exception as e:
+        return jsonify({"type": "error", "message": str(e)}), 500
+
+
+@app.route('/api/whatsapp/revive-lead', methods=['POST'])
+def api_whatsapp_revive_lead():
+    """Revives a contact from the dead leads list back to active."""
+    data = request.json or {}
+    phone = data.get("phone", "")
+    if not phone:
+        return jsonify({"success": False, "error": "Phone required"}), 400
+        
+    try:
+        cmd = ["node", "whatsapp_runner.js", "--revive", str(phone)]
+        proc = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=10)
+        return jsonify({"success": True, "phone": phone})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/whatsapp/scan-chats')
+def api_whatsapp_scan_chats():
+    """Scans all existing WhatsApp chats to detect client replies and read receipts (blue ticks)."""
+    try:
+        cmd = ["node", "whatsapp_runner.js", "--scan-chats"]
+        proc = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=90)
+        for line in proc.stdout.splitlines():
+            if line.startswith("{") and "scan_complete" in line:
+                return jsonify(json.loads(line))
+        return jsonify({"type": "scan_complete", "updatedReplies": 0, "updatedSeen": 0, "revivedCount": 0})
+    except Exception as e:
+        return jsonify({"type": "error", "message": str(e)}), 500
+
+
+@app.route('/api/whatsapp/followup/stream')
+def api_whatsapp_followup_stream():
+    """Server-Sent Events endpoint to stream live WhatsApp follow-up campaign execution."""
+    batch = request.args.get('batch', '10')
+    min_delay = request.args.get('min_delay', '25')
+    max_delay = request.args.get('max_delay', '50')
+    sender = request.args.get('sender', 'Deepaktusir')
+
+    def event_stream():
+        cmd = [
+            "node", "whatsapp_runner.js", "--run-followup",
+            batch, min_delay, max_delay, sender
+        ]
+        proc = subprocess.Popen(cmd, cwd=BASE_DIR, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        try:
+            for line in iter(proc.stdout.readline, ''):
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("{") and line.endswith("}"):
+                    try:
+                        obj = json.loads(line)
+                        yield f"data: {json.dumps(obj)}\n\n"
+                    except Exception:
+                        yield f"data: {json.dumps({'type': 'log', 'message': line})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'type': 'log', 'message': line})}\n\n"
+            proc.stdout.close()
+            proc.wait()
+        except GeneratorExit:
+            proc.terminate()
+
+    return Response(event_stream(), mimetype="text/event-stream")
+
+
 @app.route('/download/<filename>')
 def download_file(filename):
     exports_dir = crm_manager.get_exports_dir()
@@ -1493,6 +2287,43 @@ def download_file(filename):
 def download_master_crm():
     exports_dir = crm_manager.get_exports_dir()
     return send_from_directory(exports_dir, crm_manager.MASTER_FILE_NAME, as_attachment=True)
+
+
+@app.route('/api/system/backup', methods=['POST'])
+def api_system_backup():
+    """Generates an instant full backup archive."""
+    try:
+        res = system_backup.create_system_backup()
+        return jsonify({"success": True, "backup": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/system/reset', methods=['POST'])
+def api_system_reset():
+    """Creates a full backup archive, then resets workspace data to clean state."""
+    try:
+        res = system_backup.reset_system()
+        return jsonify({"success": True, "backup": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/system/backups')
+def api_system_backups():
+    """Lists all available ZIP backups."""
+    try:
+        backups = system_backup.list_backups()
+        return jsonify(backups)
+    except Exception as e:
+        return jsonify([]), 500
+
+
+@app.route('/download/backup/<filename>')
+def download_backup_file(filename):
+    """Download a backup ZIP archive."""
+    backups_dir = os.path.join(BASE_DIR, "backups")
+    return send_from_directory(backups_dir, filename, as_attachment=True)
 
 
 if __name__ == "__main__":

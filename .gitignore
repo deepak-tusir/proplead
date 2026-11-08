@@ -2,8 +2,13 @@
 .wwebjs_auth/
 .wwebjs_cache/
 
-# Lead Outreach History (Real customer numbers & outreach logs)
+# Lead Outreach History & Dead Leads (Real customer numbers & outreach logs)
 sent_history.json
+dead_leads.json
+
+# Local Backups & ZIP Archives (Contains user's full saved databases)
+backups/
+*.zip
 
 # Local Configuration (Contains personal test numbers & sender details)
 config.json
