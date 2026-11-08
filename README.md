@@ -115,3 +115,15 @@ scrapper+whatsapp/
 2. Keep `minDelaySeconds` at 25+ seconds and `maxDelaySeconds` at 50+ seconds.
 3. Use **"Preview / Dry Run"** to inspect targets before launching live outreach.
 4. Send a test message to your own number to verify connectivity.
+
+---
+
+## License & Legal Terms
+
+Copyright (c) 2026 Deepak Tusir. All Rights Reserved.
+
+This project is licensed under a **Source-Available Non-Commercial License**.
+- **Permitted**: Individual, educational, and personal non-commercial use.
+- **Strictly Prohibited**: Commercial sale, white-labeling, repackaging, or reselling of this software or derivatives without explicit prior written authorization from Deepak Tusir.
+
+See the full [LICENSE](LICENSE) file for complete legal terms.
