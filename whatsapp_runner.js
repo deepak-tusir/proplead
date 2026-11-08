@@ -605,11 +605,91 @@ async function runCampaign(filePath, batchLimit = 20, minDelay = 25, maxDelay = 
   }
 }
 
+
+/**
+ * Interactive WhatsApp Web pairing session.
+ * Streams live QR code as a base64 image data URL for browser display
+ * and simultaneously in the terminal for CLI compatibility.
+ */
+async function pairWhatsApp() {
+  emitEvent({ type: 'log', message: 'Starting WhatsApp client to generate pairing QR code...' });
+
+  const client = new Client({
+    authStrategy: new LocalAuth({
+      dataPath: path.join(__dirname, '.wwebjs_auth')
+    }),
+    puppeteer: {
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    }
+  });
+
+  client.on('qr', async (qr) => {
+    try {
+      const QRCode = require('qrcode');
+      const qrDataUrl = await QRCode.toDataURL(qr, { width: 280, margin: 2 });
+      emitEvent({
+        type: 'qr',
+        qrImage: qrDataUrl,
+        message: 'Point your phone at the screen to scan this QR code'
+      });
+    } catch (_) {
+      emitEvent({
+        type: 'qr',
+        qrText: qr,
+        message: 'Scan the QR code printed in terminal'
+      });
+    }
+    qrcode.generate(qr, { small: true });
+  });
+
+  client.on('authenticated', () => {
+    emitEvent({ type: 'authenticated', message: 'WhatsApp session authenticated successfully!' });
+  });
+
+  client.on('ready', async () => {
+    emitEvent({ type: 'ready', message: 'WhatsApp Web client is connected and ready!' });
+    await sleep(2500);
+    try { await client.destroy(); } catch (_) {}
+    process.exit(0);
+  });
+
+  client.on('auth_failure', (msg) => {
+    emitEvent({ type: 'error', message: 'WhatsApp auth failed: ' + msg });
+  });
+
+  try {
+    await client.initialize();
+  } catch (err) {
+    emitEvent({ type: 'error', message: 'Client init error: ' + err.message });
+  }
+}
+
+/**
+ * Disconnect and remove saved WhatsApp authenticated session
+ */
+function logoutWhatsApp() {
+  const authDir = path.join(__dirname, '.wwebjs_auth');
+  try {
+    if (fs.existsSync(authDir)) {
+      fs.rmSync(authDir, { recursive: true, force: true });
+    }
+    emitEvent({ type: 'logout_success', message: 'WhatsApp session disconnected successfully' });
+  } catch (err) {
+    emitEvent({ type: 'error', message: err.message });
+  }
+}
+
 // Parse Command Line
 const args = process.argv.slice(2);
 const command = args[0];
 
 if (command === '--status') {
+  getStatusInfo();
+} else if (command === '--pair') {
+  pairWhatsApp();
+} else if (command === '--logout') {
+  logoutWhatsApp();
   getStatusInfo();
 } else if (command === '--dry-run') {
   const filePath = args[1];

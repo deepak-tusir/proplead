@@ -478,13 +478,24 @@ HTML_TEMPLATE = """
             
             <!-- WhatsApp Connection & Metrics Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
-                    <div id="wa-auth-icon" class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
-                        <i class="fa-brands fa-whatsapp"></i>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center space-x-3.5">
+                        <div id="wa-auth-icon" class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-semibold">WhatsApp Session</p>
+                            <h4 id="wa-auth-status" class="text-sm font-extrabold text-emerald-600 mt-0.5">Checking...</h4>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-semibold">WhatsApp Session</p>
-                        <h4 id="wa-auth-status" class="text-sm font-extrabold text-emerald-600 mt-0.5">Checking...</h4>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="openPairModal()" id="btn-open-pair" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all flex items-center space-x-1 shadow-sm">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span id="btn-pair-text">Scan QR</span>
+                        </button>
+                        <button onclick="logoutWhatsApp()" id="btn-wa-logout" class="hidden px-2 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 rounded-lg text-xs font-semibold transition-all" title="Disconnect session">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -908,7 +919,46 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <!-- Reset & Backup Modal -->
+        <!-- WhatsApp QR Pairing Modal -->
+    <div id="wa-pair-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-600 text-xl"></i>
+                    <span>Link WhatsApp Web</span>
+                </h3>
+                <button onclick="closePairModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="text-left text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200/80 space-y-1">
+                <p class="font-bold text-slate-800">How to link:</p>
+                <p>1. Open WhatsApp on your phone</p>
+                <p>2. Tap <strong>Linked Devices &rarr; Link a Device</strong></p>
+                <p>3. Point your camera at this QR code</p>
+            </div>
+
+            <!-- Live QR Container -->
+            <div id="pair-qr-container" class="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-2xl w-60 h-60 mx-auto shadow-inner">
+                <div id="pair-qr-loading" class="text-xs text-slate-400 flex flex-col items-center space-y-2">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600"></i>
+                    <span>Generating live QR code...</span>
+                </div>
+                <img id="pair-qr-img" class="hidden w-52 h-52 rounded-lg object-contain" alt="WhatsApp QR Code">
+            </div>
+
+            <div id="pair-status-text" class="text-xs font-semibold text-slate-500">
+                Waiting for scanner...
+            </div>
+
+            <div class="flex items-center justify-end pt-2 border-t border-slate-100">
+                <button onclick="closePairModal()" class="px-4 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Reset & Backup Modal -->
     <div id="reset-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1296,12 +1346,20 @@ HTML_TEMPLATE = """
                     document.getElementById('wa-success-sent').innerText = stats.successful || 0;
                     document.getElementById('wa-failed-sent').innerText = stats.failed || 0;
 
+                    const btnLogout = document.getElementById('btn-wa-logout');
+                    const btnPair = document.getElementById('btn-open-pair');
+                    const pairText = document.getElementById('btn-pair-text');
+
                     if (data.authSessionExists) {
                         document.getElementById('wa-auth-status').innerText = 'Authenticated & Active';
                         document.getElementById('wa-auth-status').className = 'text-sm font-extrabold text-emerald-600 mt-0.5';
+                        if (btnLogout) btnLogout.classList.remove('hidden');
+                        if (pairText) pairText.innerText = 'Switch No.';
                     } else {
                         document.getElementById('wa-auth-status').innerText = 'QR Link Required';
                         document.getElementById('wa-auth-status').className = 'text-sm font-extrabold text-amber-600 mt-0.5';
+                        if (btnLogout) btnLogout.classList.add('hidden');
+                        if (pairText) pairText.innerText = 'Scan QR';
                     }
 
                     // Populate Files Dropdown
@@ -1798,6 +1856,76 @@ HTML_TEMPLATE = """
             });
         }
 
+        
+        /* ------------------ WHATSAPP QR PAIRING LOGIC ------------------ */
+        let pairEventSource = null;
+
+        function openPairModal() {
+            document.getElementById('wa-pair-modal').classList.remove('hidden');
+            document.getElementById('pair-qr-loading').classList.remove('hidden');
+            document.getElementById('pair-qr-img').classList.add('hidden');
+            document.getElementById('pair-status-text').innerText = 'Initializing client & generating QR code...';
+
+            if (pairEventSource) {
+                pairEventSource.close();
+            }
+
+            pairEventSource = new EventSource('/api/whatsapp/pair/stream');
+
+            pairEventSource.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+
+                if (data.type === 'qr' && data.qrImage) {
+                    document.getElementById('pair-qr-loading').classList.add('hidden');
+                    const img = document.getElementById('pair-qr-img');
+                    img.src = data.qrImage;
+                    img.classList.remove('hidden');
+                    document.getElementById('pair-status-text').innerText = 'Scan the QR code with WhatsApp on your phone';
+                } else if (data.type === 'authenticated') {
+                    document.getElementById('pair-status-text').innerText = 'Authenticated! Initializing connection...';
+                } else if (data.type === 'ready') {
+                    document.getElementById('pair-status-text').innerText = 'Connected successfully!';
+                    pairEventSource.close();
+                    pairEventSource = null;
+                    setTimeout(() => {
+                        closePairModal();
+                        loadWhatsAppStatus();
+                    }, 1200);
+                } else if (data.type === 'error') {
+                    document.getElementById('pair-status-text').innerText = 'Error: ' + data.message;
+                }
+            };
+
+            pairEventSource.onerror = function() {
+                if (pairEventSource) {
+                    pairEventSource.close();
+                    pairEventSource = null;
+                }
+            };
+        }
+
+        function closePairModal() {
+            if (pairEventSource) {
+                pairEventSource.close();
+                pairEventSource = null;
+            }
+            document.getElementById('wa-pair-modal').classList.add('hidden');
+        }
+
+        function logoutWhatsApp() {
+            if (!confirm('Disconnect current WhatsApp session? You will need to scan QR code again.')) {
+                return;
+            }
+
+            fetch('/api/whatsapp/logout', { method: 'POST' })
+                .then(res => res.json())
+                .then(res => {
+                    alert('WhatsApp session disconnected.');
+                    loadWhatsAppStatus();
+                })
+                .catch(err => alert('Error: ' + err.message));
+        }
+
         /* ------------------ SYSTEM BACKUP & RESET LOGIC ------------------ */
         function openResetModal() {
             document.getElementById('reset-modal').classList.remove('hidden');
@@ -2241,6 +2369,42 @@ def api_whatsapp_revive_lead():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+
+@app.route('/api/whatsapp/pair/stream')
+def api_whatsapp_pair_stream():
+    """Server-Sent Events endpoint to stream real-time WhatsApp QR code to browser."""
+    def event_stream():
+        cmd = ["node", "whatsapp_runner.js", "--pair"]
+        proc = subprocess.Popen(cmd, cwd=BASE_DIR, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        try:
+            for line in iter(proc.stdout.readline, ''):
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("{") and line.endswith("}"):
+                    try:
+                        obj = json.loads(line)
+                        yield f"data: {json.dumps(obj)}\n\n"
+                    except Exception:
+                        pass
+            proc.stdout.close()
+            proc.wait()
+        except GeneratorExit:
+            proc.terminate()
+
+    return Response(event_stream(), mimetype="text/event-stream")
+
+
+@app.route('/api/whatsapp/logout', methods=['POST'])
+def api_whatsapp_logout():
+    """Disconnects and removes saved WhatsApp session."""
+    try:
+        cmd = ["node", "whatsapp_runner.js", "--logout"]
+        proc = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=10)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/whatsapp/scan-chats')
 def api_whatsapp_scan_chats():
