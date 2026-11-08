@@ -28,7 +28,8 @@ import crm_manager
 import system_backup
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'proplead-outreach-secret-key-change-in-production')
+import secrets
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
 # Base Directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -1045,6 +1046,17 @@ HTML_TEMPLATE = """
             box.scrollTop = box.scrollHeight;
         }
 
+        
+        function escapeHtml(str) {
+            if (!str && str !== 0) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         /* ------------------ SCRAPER LOGIC ------------------ */
         function startScrape(event) {
             event.preventDefault();
@@ -1143,11 +1155,11 @@ HTML_TEMPLATE = """
 
                 tr.innerHTML = `
                     <td class="p-3 text-slate-400 font-mono">${idx + 1}</td>
-                    <td class="p-3 font-bold text-slate-900">${businessName}</td>
+                    <td class="p-3 font-bold text-slate-900">${escapeHtml(businessName)}</td>
                     <td class="p-3 font-semibold text-slate-700">${r["Phone Number"] || '-'}</td>
                     <td class="p-3 text-slate-600">${r["Email Address"] || '-'}</td>
                     <td class="p-3 text-indigo-600 truncate max-w-[140px]">${r["Website"] ? `<a href="${r["Website"]}" target="_blank" class="underline">${r["Website"].replace(/^https?:\\/\\//,'')}</a>` : '-'}</td>
-                    <td class="p-3 text-slate-500 truncate max-w-[160px]" title="${fullAddress}">${fullAddress}</td>
+                    <td class="p-3 text-slate-500 truncate max-w-[160px]" title="${escapeHtml(fullAddress)}">${escapeHtml(fullAddress)}</td>
                     <td class="p-3 font-bold text-amber-600">${r["Rating"] ? `${r["Rating"]}` : '-'}</td>
                     <td class="p-3 text-center">
                         ${r["Phone Number"] ? `
@@ -2097,7 +2109,7 @@ def api_whatsapp_status():
 @app.route('/api/whatsapp/dry-run')
 def api_whatsapp_dry_run():
     """Runs a non-destructive outreach dry-run to preview contacts and messages."""
-    filename = request.args.get('file', 'Master_CRM_Leads.xlsx')
+    filename = os.path.basename(request.args.get('file', 'Master_CRM_Leads.xlsx'))
     only_no_web = request.args.get('only_no_web', '1') == '1'
     filepath = os.path.join(crm_manager.get_exports_dir(), filename) if filename else 'master'
     
@@ -2116,11 +2128,12 @@ def api_whatsapp_dry_run():
 def api_whatsapp_test():
     """Sends a single test message using Node whatsapp runner."""
     data = request.json or {}
-    phone = data.get("phone", "")
-    sender = data.get("sender", "Deepaktusir")
-    
-    if not phone:
-        return jsonify({"success": False, "error": "Phone number required"}), 400
+    raw_phone = data.get("phone", "")
+    raw_sender = data.get("sender", "Deepaktusir")
+    phone = re.sub(r'[^0-9+]', '', str(raw_phone)).strip()
+    sender = re.sub(r'[^a-zA-Z0-9\s._-]', '', str(raw_sender)).strip().lstrip('-') or 'Deepaktusir'
+    if not phone or not phone.lstrip('+').isdigit():
+        return jsonify({"success": False, "error": "Invalid phone format"}), 400
         
     try:
         cmd = ["node", "whatsapp_runner.js", "--test", phone, sender]
@@ -2147,7 +2160,7 @@ def api_whatsapp_test():
 @app.route('/api/whatsapp/campaign/stream')
 def api_whatsapp_campaign_stream():
     """Server-Sent Events endpoint to stream live WhatsApp outreach campaign progress."""
-    filename = request.args.get('file', 'Master_CRM_Leads.xlsx')
+    filename = os.path.basename(request.args.get('file', 'Master_CRM_Leads.xlsx'))
     batch = request.args.get('batch', '20')
     min_delay = request.args.get('min_delay', '25')
     max_delay = request.args.get('max_delay', '50')
@@ -2216,9 +2229,10 @@ def api_whatsapp_dead_leads():
 def api_whatsapp_revive_lead():
     """Revives a contact from the dead leads list back to active."""
     data = request.json or {}
-    phone = data.get("phone", "")
-    if not phone:
-        return jsonify({"success": False, "error": "Phone required"}), 400
+    raw_phone = data.get("phone", "")
+    phone = re.sub(r'[^0-9+]', '', str(raw_phone)).strip()
+    if not phone or not phone.lstrip('+').isdigit():
+        return jsonify({"success": False, "error": "Invalid phone format"}), 400
         
     try:
         cmd = ["node", "whatsapp_runner.js", "--revive", str(phone)]
@@ -2277,8 +2291,9 @@ def api_whatsapp_followup_stream():
     return Response(event_stream(), mimetype="text/event-stream")
 
 
-@app.route('/download/<filename>')
+@app.route('/download/<path:filename>')
 def download_file(filename):
+    filename = os.path.basename(filename)
     exports_dir = crm_manager.get_exports_dir()
     return send_from_directory(exports_dir, filename, as_attachment=True)
 
@@ -2319,8 +2334,9 @@ def api_system_backups():
         return jsonify([]), 500
 
 
-@app.route('/download/backup/<filename>')
+@app.route('/download/backup/<path:filename>')
 def download_backup_file(filename):
+    filename = os.path.basename(filename)
     """Download a backup ZIP archive."""
     backups_dir = os.path.join(BASE_DIR, "backups")
     return send_from_directory(backups_dir, filename, as_attachment=True)

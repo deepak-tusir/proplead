@@ -89,11 +89,35 @@ def is_valid_email(email: str) -> bool:
     return True
 
 
+
+def is_safe_url(url: str) -> bool:
+    """Blocks loopbacks, private IPs, and non-http schemes to prevent SSRF."""
+    try:
+        import ipaddress
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        if hostname.lower() in ('localhost', '127.0.0.1', '0.0.0.0', '::1'):
+            return False
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                return False
+        except ValueError:
+            pass  # Valid domain name
+        return True
+    except Exception:
+        return False
+
 def extract_emails_from_website(url: str, timeout: int = 7) -> str:
     """
     Crawls business website homepage and contact/about page to harvest email addresses.
     """
-    if not url or not url.startswith('http'):
+    if not url or not url.startswith('http') or not is_safe_url(url):
         return ""
         
     for skip_d in SKIP_WEBSITE_DOMAINS:
