@@ -178,21 +178,21 @@ HTML_TEMPLATE = """
                                     <i class="fa-solid fa-briefcase"></i>
                                 </div>
                                 <select id="target-niche" onchange="handleNicheChange()" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none text-sm transition-all shadow-sm bg-white font-medium">
-                                    <optgroup label="👑 TIER 1: High-Ticket / Maximum Profit (Recommended)">
+                                    <optgroup label="TIER 1: High-Ticket / Maximum Profit (Recommended)">
                                         <option value="Property dealers" selected>Property Dealers &amp; Real Estate</option>
                                         <option value="Interior Designers">Interior Designers &amp; Decorators</option>
                                         <option value="Architects">Architects &amp; Design Studios</option>
                                         <option value="Builders and Developers">Builders &amp; Real Estate Developers</option>
                                         <option value="Banquet halls">Banquet Halls &amp; Wedding Venues</option>
                                     </optgroup>
-                                    <optgroup label="🥈 TIER 2: Professional &amp; High-Trust Local Services">
+                                    <optgroup label="TIER 2: Professional &amp; High-Trust Local Services">
                                         <option value="Dental Clinics">Dental Clinics &amp; Implant Centres</option>
                                         <option value="Hospital clinics">Polyclinics &amp; Specialized Hospitals</option>
                                         <option value="Immigration consultants">Immigration &amp; Visa Consultants</option>
                                         <option value="Coaching Institutes">Coaching Institutes &amp; Academies</option>
                                         <option value="Wedding planners">Wedding Planners &amp; Luxury Event Managers</option>
                                     </optgroup>
-                                    <optgroup label="🥉 TIER 3: High-Volume Commercial &amp; Showrooms">
+                                    <optgroup label="TIER 3: High-Volume Commercial &amp; Showrooms">
                                         <option value="Hotels and resorts">Hotels &amp; Boutique Resorts</option>
                                         <option value="Used Car dealers">Used &amp; Luxury Car Dealerships</option>
                                         <option value="Car modification studios">Car Modification &amp; Detailing Studios</option>
@@ -200,7 +200,7 @@ HTML_TEMPLATE = """
                                         <option value="Furniture Manufacturers">Furniture Manufacturers &amp; Showrooms</option>
                                         <option value="Travel agencies">Travel Agencies &amp; Tour Operators</option>
                                     </optgroup>
-                                    <optgroup label="✏️ Custom Search">
+                                    <optgroup label="Custom Search">
                                         <option value="custom">Custom Niche (Type any keyword)...</option>
                                     </optgroup>
                                 </select>
@@ -1148,7 +1148,7 @@ HTML_TEMPLATE = """
                     <td class="p-3 text-slate-600">${r["Email Address"] || '-'}</td>
                     <td class="p-3 text-indigo-600 truncate max-w-[140px]">${r["Website"] ? `<a href="${r["Website"]}" target="_blank" class="underline">${r["Website"].replace(/^https?:\\/\\//,'')}</a>` : '-'}</td>
                     <td class="p-3 text-slate-500 truncate max-w-[160px]" title="${fullAddress}">${fullAddress}</td>
-                    <td class="p-3 font-bold text-amber-600">${r["Rating"] ? `★ ${r["Rating"]}` : '-'}</td>
+                    <td class="p-3 font-bold text-amber-600">${r["Rating"] ? `${r["Rating"]}` : '-'}</td>
                     <td class="p-3 text-center">
                         ${r["Phone Number"] ? `
                             <a href="${waLink}" target="_blank" class="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg font-semibold transition-all text-[11px]">
@@ -1405,9 +1405,9 @@ HTML_TEMPLATE = """
                     document.getElementById('wa-countdown-badge').classList.add('hidden');
                 } else if (data.type === 'contact_result') {
                     if (data.status === 'success') {
-                        appendLog('wa-live-logs', `  ✅ Successfully sent pitch to ${data.name}!`);
+                        appendLog('wa-live-logs', `  Successfully sent pitch to ${data.name}!`);
                     } else {
-                        appendLog('wa-live-logs', `  ⚠️ Skipped/Failed for ${data.name}: ${data.reason}`);
+                        appendLog('wa-live-logs', `  Skipped/Failed for ${data.name}: ${data.reason}`);
                     }
                 } else if (data.type === 'delay_start') {
                     document.getElementById('wa-countdown-badge').classList.remove('hidden');
@@ -1418,7 +1418,7 @@ HTML_TEMPLATE = """
                     eventSource.close();
                     document.getElementById('wa-countdown-badge').classList.add('hidden');
                     document.getElementById('wa-progress-bar').style.width = '100%';
-                    appendLog('wa-live-logs', `\\n🏁 ${data.message}`);
+                    appendLog('wa-live-logs', `\\n${data.message}`);
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
                     loadWhatsAppStatus();
@@ -1597,7 +1597,7 @@ HTML_TEMPLATE = """
             .then(res => res.json())
             .then(res => {
                 if (res.success) {
-                    alert(`✅ Lead ${phone} successfully revived and unblacklisted!`);
+                    alert(`Lead ${phone} successfully revived and unblacklisted!`);
                     loadFollowupData();
                 } else {
                     alert(`Failed to revive: ${res.error || 'Unknown error'}`);
@@ -1628,14 +1628,14 @@ HTML_TEMPLATE = """
 
                     if (res.type === 'error') {
                         statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
-                        statusBox.innerHTML = `❌ Error during scan: ${res.message}`;
+                        statusBox.innerHTML = `Error during scan: ${res.message}`;
                         return;
                     }
 
                     statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
                     statusBox.innerHTML = `
                         <div class="flex items-center justify-between">
-                            <span>✅ <strong>Scan Finished!</strong> Found <strong>${res.updatedReplies || 0}</strong> client replies, <strong>${res.updatedSeen || 0}</strong> seen messages (blue ticks), and auto-revived <strong>${res.revivedCount || 0}</strong> dead leads.</span>
+                            <span><strong>Scan Finished!</strong> Found <strong>${res.updatedReplies || 0}</strong> client replies, <strong>${res.updatedSeen || 0}</strong> seen messages (blue ticks), and auto-revived <strong>${res.revivedCount || 0}</strong> dead leads.</span>
                         </div>
                     `;
 
@@ -1645,7 +1645,7 @@ HTML_TEMPLATE = """
                     btn.disabled = false;
                     btn.innerHTML = `<i class="fa-solid fa-satellite-dish text-indigo-600"></i><span>Scan WhatsApp for Replies &amp; Blue Ticks</span>`;
                     statusBox.className = "p-4 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
-                    statusBox.innerHTML = `❌ Scan failed: ${err.message}`;
+                    statusBox.innerHTML = `Scan failed: ${err.message}`;
                 });
         }
 
@@ -1702,9 +1702,9 @@ HTML_TEMPLATE = """
                     document.getElementById('fu-countdown-badge').classList.add('hidden');
                 } else if (data.type === 'followup_result') {
                     if (data.status === 'success') {
-                        appendLog('fu-live-logs', `  ✅ Successfully sent follow-up #${data.followUpNum} to ${data.name}!`);
+                        appendLog('fu-live-logs', `  Successfully sent follow-up #${data.followUpNum} to ${data.name}!`);
                     } else {
-                        appendLog('fu-live-logs', `  ⚠️ Failed for ${data.name}: ${data.reason}`);
+                        appendLog('fu-live-logs', `  Failed for ${data.name}: ${data.reason}`);
                     }
                 } else if (data.type === 'delay_start') {
                     document.getElementById('fu-countdown-badge').classList.remove('hidden');
@@ -1715,7 +1715,7 @@ HTML_TEMPLATE = """
                     eventSource.close();
                     document.getElementById('fu-countdown-badge').classList.add('hidden');
                     document.getElementById('fu-progress-bar').style.width = '100%';
-                    appendLog('fu-live-logs', `\\n🏁 ${data.message}`);
+                    appendLog('fu-live-logs', `\\n${data.message}`);
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
                     loadFollowupData();
@@ -1772,10 +1772,10 @@ HTML_TEMPLATE = """
                 btn.innerText = 'Send Now';
                 if (res.success) {
                     statusBox.className = 'text-xs p-3 rounded-xl bg-emerald-50 text-emerald-800 font-bold block';
-                    statusBox.innerText = '✅ Test message sent successfully! Check your WhatsApp.';
+                    statusBox.innerText = 'Test message sent successfully! Check your WhatsApp.';
                 } else {
                     statusBox.className = 'text-xs p-3 rounded-xl bg-rose-50 text-rose-800 font-bold block';
-                    statusBox.innerText = `❌ Error: ${res.error}`;
+                    statusBox.innerText = `Error: ${res.error}`;
                 }
             })
             .catch(err => {
@@ -1850,14 +1850,14 @@ HTML_TEMPLATE = """
                         statusBox.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold block";
                         statusBox.innerHTML = `
                             <div class="flex items-center justify-between">
-                                <span>✅ Backup created successfully: <strong>${res.backup.zip_filename}</strong></span>
+                                <span>Backup created successfully: <strong>${res.backup.zip_filename}</strong></span>
                                 <a href="/download/backup/${res.backup.zip_filename}" class="ml-2 px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">Download ZIP</a>
                             </div>
                         `;
                         loadBackupsList();
                     } else {
                         statusBox.className = "p-3 rounded-xl bg-rose-50 text-rose-800 text-xs block";
-                        statusBox.innerText = `❌ Backup error: ${res.error}`;
+                        statusBox.innerText = `Backup error: ${res.error}`;
                     }
                 })
                 .catch(err => {
@@ -1869,7 +1869,7 @@ HTML_TEMPLATE = """
         }
 
         function doBackupAndReset() {
-            if (!confirm("⚠️ ARE YOU SURE?\\n\\nThis will:\\n1. Create a complete ZIP backup of all current data.\\n2. Reset all leads, Master CRM, and WhatsApp sent history.\\n\\nYou can start fresh with a clean slate.")) {
+            if (!confirm("ARE YOU SURE?\\n\\nThis will:\\n1. Create a complete ZIP backup of all current data.\\n2. Reset all leads, Master CRM, and WhatsApp sent history.\\n\\nYou can start fresh with a clean slate.")) {
                 return;
             }
 
@@ -1891,7 +1891,7 @@ HTML_TEMPLATE = """
                         statusBox.className = "p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold block";
                         statusBox.innerHTML = `
                             <div class="space-y-1">
-                                <div>🎉 <strong>Reset Complete! Workspace is now fresh and clean.</strong></div>
+                                <div><strong>Reset Complete! Workspace is now fresh and clean.</strong></div>
                                 <div class="text-[11px] text-emerald-700 flex items-center justify-between">
                                     <span>All data safely preserved in: <strong>${res.backup.zip_filename}</strong></span>
                                     <a href="/download/backup/${res.backup.zip_filename}" class="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700">Download ZIP</a>
@@ -1905,7 +1905,7 @@ HTML_TEMPLATE = """
                         loadFollowupData();
                     } else {
                         statusBox.className = "p-3 rounded-xl bg-rose-50 text-rose-800 text-xs block";
-                        statusBox.innerText = `❌ Reset error: ${res.error}`;
+                        statusBox.innerText = `Reset error: ${res.error}`;
                     }
                 })
                 .catch(err => {

@@ -14,7 +14,7 @@ try {
   const raw = fs.readFileSync(path.join(__dirname, 'niches_config.json'), 'utf8');
   nichesConfig = JSON.parse(raw);
 } catch (e) {
-  console.warn('⚠️ Could not load niches_config.json, using fallback templates');
+  console.warn('Could not load niches_config.json, using fallback templates');
 }
 
 /**

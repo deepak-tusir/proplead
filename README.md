@@ -1,53 +1,53 @@
-# 🏢 PropLead & WhatsApp Outreach Hub (Unified Command Center)
+# PropLead & WhatsApp Outreach Hub (Unified Command Center)
 
-Ek hi jagah se **Multi-Niche B2B Local Leads Scrape** karne, **Master CRM** me manage karne, aur unhe direct **Automated Conversational WhatsApp Pitches** bhejne ka complete unified client acquisition engine.
+Multi-Niche B2B Local Leads Scraper, Master CRM Database, and Automated Conversational WhatsApp Outreach Engine.
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
 1. **Multi-Niche Google Maps Scraper (Python + Playwright)**:
-   - Ab sirf property dealers hi nahi, balki **16+ Curated High-Converting Niches** me se kisi ko bhi target karein:
-     - 👑 **Tier 1 (High-Ticket):** Real Estate, Interior Designers, Architects, Builders, Banquet Halls.
-     - 🥈 **Tier 2 (High-Trust Services):** Dental Clinics, Polyclinics, Immigration Consultants, Coaching Institutes, Wedding Planners.
-     - 🥉 **Tier 3 (Commercial Showrooms):** Hotels & Resorts, Used Car Dealers, Car Modification, Solar Dealers, Furniture, Travel.
-     - ✏️ **Custom Niche:** Koi bhi local business keyword type karke scrape karein.
-   - Business Name, Phone Number, Business Email, Website, Full Address, Star Rating & Review count nikalta hai.
-   - Excel (`.xlsx`) and `.csv` formatted auto-exports with WhatsApp direct links.
+   - Target across **16+ Curated High-Converting Business Niches**:
+     - **Tier 1 (High-Ticket):** Real Estate, Interior Designers, Architects, Builders, Banquet Halls.
+     - **Tier 2 (High-Trust Services):** Dental Clinics, Polyclinics, Immigration Consultants, Coaching Institutes, Wedding Planners.
+     - **Tier 3 (Commercial Showrooms):** Hotels & Resorts, Used Car Dealers, Car Modification, Solar Dealers, Furniture, Travel.
+     - **Custom Niche:** Search by any custom business keyword and city.
+   - Harvests Business Name, Phone Number, Business Email, Website, Full Address, Rating, and Review count.
+   - Formatted Excel (.xlsx) and CSV exports with direct WhatsApp links.
 
 2. **Master CRM Lead Database (`crm_manager.py`)**:
-   - Sabhi cities aur niches ke leads automatically `Master_CRM_Leads.xlsx` me deduplicate hokar merge hote hain.
-   - Niche Filter + Lead Status management (`New Lead`, `Contacted`, `Follow Up`, `Meeting Scheduled`, `Converted`, `Not Interested`).
-   - WhatsApp outreach status indicator (`✅ Sent` with timestamp ya `Unsent`).
+   - Leads from all searches and cities automatically deduplicate and merge into `Master_CRM_Leads.xlsx`.
+   - Niche Filter and Lead Status tracking (New Lead, Contacted, Follow Up, Meeting Scheduled, Converted, Not Interested).
+   - WhatsApp outreach status indicator (Sent with timestamp or Unsent).
 
-3. **Smart Niche-Specific WhatsApp Outreach Engine (Node.js + `whatsapp-web.js`)**:
-   - Har niche ke dukh-dard ke hisab se **personalized non-salesy pitch**:
-     - *Interior / Architects:* Project portfolio & design showcase pitch.
-     - *Dental / Clinics:* Patient appointment scheduling pitch.
-     - *Real Estate:* Active inventory & WhatsApp leads pitch.
-     - *Banquet / Hotels:* Venue decor photos & date booking pitch.
-   - **Anti-Ban Safeguards**: Random delays (25s - 50s), batch limits (10-30), WhatsApp number validation check, deduplication against `sent_history.json`.
-   - **Filter targets**: Sirf unhi businesses ko message bhejta hai jinki website nahi hai (`onlyWithoutWebsite: true`).
-   - Saved login session (`.wwebjs_auth`) — baar-baar QR code scan karne ki zaroorat nahi.
+3. **Smart WhatsApp Outreach & Contextual Follow-up Engine (Node.js + `whatsapp-web.js`)**:
+   - Niche-tailored, conversational outreach messages.
+   - **Smart Follow-up System**: Max 2 follow-ups with contextual messaging (Blue Tick / Seen vs Unopened / Bump, plus a respectful Breakup pitch).
+   - **Dead Leads Blacklist Vault**: Automatically isolates unresponsive leads after 2 follow-ups so they are never messaged again.
+   - **Auto-Revival**: If any dead lead replies back on WhatsApp, they are automatically restored to active CRM.
+   - **Anti-Ban Protections**: Random delays (25s - 50s), batch limits (10-30), WhatsApp number validation, deduplication against `sent_history.json`.
+   - Saved login session (`.wwebjs_auth`) — no repeated QR scans required.
 
 4. **Unified Web Dashboard (Browser GUI - `http://localhost:5000`)**:
-   - Single browser tab me teeno tools:
-     - **Tab 1: Lead Scraper**: Categorized Niche selector (Tier 1-3), live progress bar, live logs stream, session preview table.
-     - **Tab 2: Master CRM**: Niche & Status filters, search, WhatsApp chat quick links, Excel download.
-     - **Tab 3: WhatsApp Outreach**: Dry-run preview, test message to your own phone, live automated campaign with real-time countdown timer.
+   - Single browser command center:
+     - **Tab 1: Lead Scraper**: Niche selector, live progress bar, activity feed, session preview table.
+     - **Tab 2: Master CRM**: Niche & status filters, search, WhatsApp chat links, Excel download.
+     - **Tab 3: WhatsApp Outreach**: Dry-run preview, test message to your phone, live campaign stream with countdown timer.
+     - **Tab 4: Follow-ups & Dead Leads**: Chat status scanner, pending queue, dead leads vault, and manual revival.
+   - **Auto-Backup & Reset System**: 1-click full ZIP archive backup with clean workspace reset.
 
 ---
 
-## 🚀 How to Run (Kaise Chalayein)
+## How to Run
 
 ### Method 1: Master Launcher (Recommended)
-Double click karein:
+Double click:
 ```bat
 start.bat
 ```
-Ye ek menu show karega:
-- **[1] Start Web Dashboard** (Browser GUI khul jayega)
-- **[2] Run Property Dealer Lead Scraper** (Terminal CLI)
+Select from the menu:
+- **[1] Start Web Dashboard** (Opens browser interface)
+- **[2] Run Lead Scraper** (Terminal CLI)
 - **[3] Run WhatsApp Outreach Tool** (Terminal CLI)
 - **[4] Open Exports Folder**
 - **[5] Install / Verify Dependencies**
@@ -55,45 +55,45 @@ Ye ek menu show karega:
 ---
 
 ### Method 2: Direct Shortcuts
-- **Web UI chalane ke liye**: Double click `start_web_ui.bat` -> browser me `http://localhost:5000` open hoga.
-- **Terminal Scraper chalane ke liye**: Double click `run_scraper.bat`
-- **Terminal WhatsApp Outreach chalane ke liye**: Double click `run_whatsapp.bat`
+- **Web UI**: Double click `start_web_ui.bat` -> browser opens at `http://localhost:5000`.
+- **Terminal Scraper**: Double click `run_scraper.bat`.
+- **Terminal WhatsApp Outreach**: Double click `run_whatsapp.bat`.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 scrapper+whatsapp/
-├── exports/                       # Sabhi scraped files aur Master CRM
+├── exports/                       # Scraped Excel files and Master CRM
 │   ├── Master_CRM_Leads.xlsx      # Master deduplicated database
 │   ├── Master_CRM_Leads.csv
-│   └── ... (Faridabad, Gurgaon, Jind, Sonipat, Delhi files)
+│   └── ... (Session files)
+├── backups/                       # Timestamped system ZIP backups
 ├── .wwebjs_auth/                  # WhatsApp saved authenticated session
-├── node_modules/                  # Node.js dependencies
-├── scraper.py                     # Core web scraping engine (Playwright)
+├── scraper.py                     # Web scraping engine (Playwright)
 ├── crm_manager.py                 # Master CRM & deduplication logic
-├── web_app.py                     # Unified Web GUI (Flask + Tailwind CSS + SSE)
-├── main.py                        # Terminal CLI scraper
+├── web_app.py                     # Web GUI (Flask + Tailwind CSS + SSE)
+├── system_backup.py               # Auto-backup & workspace reset engine
+├── niches_config.json             # Tier 1-3 niches and custom templates
 ├── whatsapp_runner.js             # WhatsApp engine runner (Web & CLI bridge)
 ├── index.js                       # Interactive CLI WhatsApp Outreach
 ├── leadLoader.js                  # Lead loader from ./exports
 ├── phoneFormatter.js              # Phone number normalizer
-├── templates.js                   # Sales pitch message templates
-├── historyManager.js              # Sent tracking & deduplication
-├── sent_history.json              # History of all contacted numbers
-├── config.json                    # Configuration (delays, batch limits, sender name)
+├── templates.js                   # Sales pitch & follow-up message templates
+├── historyManager.js              # Sent tracking, follow-ups & dead leads logic
+├── config.json                    # Outreach settings (delays, batch limits, sender)
 ├── start.bat                      # Master launcher menu
 ├── start_web_ui.bat               # Web GUI launcher
 ├── run_scraper.bat                # CLI Scraper launcher
 ├── run_whatsapp.bat               # CLI WhatsApp launcher
-├── requirements.txt               # Python requirements
-└── package.json                   # Node.js requirements
+├── requirements.txt               # Python dependencies
+└── package.json                   # Node.js dependencies
 ```
 
 ---
 
-## ⚙️ Configuration (`config.json`)
+## Configuration (`config.json`)
 
 ```json
 {
@@ -110,8 +110,8 @@ scrapper+whatsapp/
 
 ---
 
-## 🛡️ Anti-Ban Safety Tips
-1. Ek session me **20-30 messages** se zyada na bhejein.
-2. `minDelaySeconds` ko 25 seconds aur `maxDelaySeconds` ko 50 seconds se kam na karein.
-3. Pehle **"Preview / Dry Run"** karke verify karein ki kaunse leads target ho rahe hain.
-4. Khud ke phone number pe **"Send Test Message"** test karke WhatsApp verify karein.
+## Anti-Ban Safety Guidelines
+1. Limit sending to **20-30 messages** per session.
+2. Keep `minDelaySeconds` at 25+ seconds and `maxDelaySeconds` at 50+ seconds.
+3. Use **"Preview / Dry Run"** to inspect targets before launching live outreach.
+4. Send a test message to your own number to verify connectivity.

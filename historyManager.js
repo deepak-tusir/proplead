@@ -27,7 +27,7 @@ class HistoryManager {
         return data;
       }
     } catch (err) {
-      console.warn('⚠️ Could not load history file, starting fresh:', err.message);
+      console.warn('Could not load history file, starting fresh:', err.message);
     }
     return {};
   }
@@ -36,7 +36,7 @@ class HistoryManager {
     try {
       fs.writeFileSync(HISTORY_FILE, JSON.stringify(this.history, null, 2), 'utf8');
     } catch (err) {
-      console.error('❌ Error saving history file:', err.message);
+      console.error('Error saving history file:', err.message);
     }
   }
 
@@ -47,7 +47,7 @@ class HistoryManager {
         return JSON.parse(raw);
       }
     } catch (err) {
-      console.warn('⚠️ Could not load dead leads file:', err.message);
+      console.warn('Could not load dead leads file:', err.message);
     }
     return {};
   }
@@ -56,7 +56,7 @@ class HistoryManager {
     try {
       fs.writeFileSync(DEAD_FILE, JSON.stringify(this.deadLeads, null, 2), 'utf8');
     } catch (err) {
-      console.error('❌ Error saving dead leads file:', err.message);
+      console.error('Error saving dead leads file:', err.message);
     }
   }
 

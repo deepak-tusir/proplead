@@ -270,7 +270,7 @@ async function scanChats() {
           revivedCount++;
           emitEvent({
             type: 'log',
-            message: `🎉 Dead lead revived! ${item.name || phone} replied: "${(lastIncoming.body || '').slice(0, 35)}..."`
+            message: `Dead lead revived! ${item.name || phone} replied: "${(lastIncoming.body || '').slice(0, 35)}..."`
           });
         }
       } else if (lastOutgoing) {
@@ -388,7 +388,7 @@ async function runFollowUpCampaign(batchLimit = 10, minDelay = 25, maxDelay = 50
           deadMovedCount++;
           emitEvent({
             type: 'log',
-            message: `⚠️ Follow-up #2 (final) sent to ${item.name}. Moved to Dead Leads list automatically.`
+            message: `Follow-up #2 (final) sent to ${item.name}. Moved to Dead Leads list automatically.`
           });
         }
 
