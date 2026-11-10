@@ -8,6 +8,7 @@ import os
 import sys
 import re
 import json
+import time
 import queue
 import socket
 import asyncio
@@ -35,6 +36,9 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SENT_HISTORY_FILE = os.path.join(BASE_DIR, "sent_history.json")
 DEAD_LEADS_FILE = os.path.join(BASE_DIR, "dead_leads.json")
+
+# In-memory pairing state for real-time streaming and proxy fallback polling
+latest_pair_state = {"status": "idle", "qrImage": None, "timestamp": 0}
 
 
 def get_local_ip():
@@ -1859,6 +1863,29 @@ HTML_TEMPLATE = """
         
         /* ------------------ WHATSAPP QR PAIRING LOGIC ------------------ */
         let pairEventSource = null;
+        let pairPollInterval = null;
+
+        function handlePairData(data) {
+            if (data.type === 'qr' && data.qrImage) {
+                document.getElementById('pair-qr-loading').classList.add('hidden');
+                const img = document.getElementById('pair-qr-img');
+                img.src = data.qrImage;
+                img.classList.remove('hidden');
+                document.getElementById('pair-status-text').innerText = 'Scan the QR code with WhatsApp on your phone';
+            } else if (data.type === 'authenticated') {
+                document.getElementById('pair-status-text').innerText = 'Authenticated! Initializing connection...';
+            } else if (data.type === 'ready') {
+                document.getElementById('pair-status-text').innerText = 'Connected successfully!';
+                if (pairEventSource) { pairEventSource.close(); pairEventSource = null; }
+                if (pairPollInterval) { clearInterval(pairPollInterval); pairPollInterval = null; }
+                setTimeout(() => {
+                    closePairModal();
+                    loadWhatsAppStatus();
+                }, 1200);
+            } else if (data.type === 'error') {
+                document.getElementById('pair-status-text').innerText = 'Error: ' + data.message;
+            }
+        }
 
         function openPairModal() {
             document.getElementById('wa-pair-modal').classList.remove('hidden');
@@ -1869,45 +1896,50 @@ HTML_TEMPLATE = """
             if (pairEventSource) {
                 pairEventSource.close();
             }
+            if (pairPollInterval) {
+                clearInterval(pairPollInterval);
+            }
 
             pairEventSource = new EventSource('/api/whatsapp/pair/stream');
 
             pairEventSource.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-
-                if (data.type === 'qr' && data.qrImage) {
-                    document.getElementById('pair-qr-loading').classList.add('hidden');
-                    const img = document.getElementById('pair-qr-img');
-                    img.src = data.qrImage;
-                    img.classList.remove('hidden');
-                    document.getElementById('pair-status-text').innerText = 'Scan the QR code with WhatsApp on your phone';
-                } else if (data.type === 'authenticated') {
-                    document.getElementById('pair-status-text').innerText = 'Authenticated! Initializing connection...';
-                } else if (data.type === 'ready') {
-                    document.getElementById('pair-status-text').innerText = 'Connected successfully!';
-                    pairEventSource.close();
-                    pairEventSource = null;
-                    setTimeout(() => {
-                        closePairModal();
-                        loadWhatsAppStatus();
-                    }, 1200);
-                } else if (data.type === 'error') {
-                    document.getElementById('pair-status-text').innerText = 'Error: ' + data.message;
-                }
+                try {
+                    const data = JSON.parse(e.data);
+                    handlePairData(data);
+                } catch(err) {}
             };
 
             pairEventSource.onerror = function() {
-                if (pairEventSource) {
-                    pairEventSource.close();
-                    pairEventSource = null;
-                }
+                // Do not immediately terminate; proxy buffering fallback is active
+                console.log('SSE connection waiting or blip, polling active...');
             };
+
+            // Fast fallback: poll /api/whatsapp/pair/poll every 1.5s in case reverse proxy (Cloudflare) buffers SSE
+            pairPollInterval = setInterval(() => {
+                const img = document.getElementById('pair-qr-img');
+                if (img.classList.contains('hidden')) {
+                    fetch('/api/whatsapp/pair/poll')
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.hasQr && data.qrImage) {
+                                handlePairData({ type: 'qr', qrImage: data.qrImage });
+                            } else if (data.status === 'authenticated' || data.status === 'ready') {
+                                handlePairData({ type: data.status });
+                            }
+                        })
+                        .catch(() => {});
+                }
+            }, 1500);
         }
 
         function closePairModal() {
             if (pairEventSource) {
                 pairEventSource.close();
                 pairEventSource = null;
+            }
+            if (pairPollInterval) {
+                clearInterval(pairPollInterval);
+                pairPollInterval = null;
             }
             document.getElementById('wa-pair-modal').classList.add('hidden');
         }
@@ -2126,6 +2158,15 @@ def api_update_lead_status():
     return jsonify({"success": success})
 
 
+def make_sse_response(generator):
+    """Creates a standards-compliant SSE Response configured to prevent reverse proxy buffering (Cloudflare, Nginx)."""
+    resp = Response(generator, mimetype="text/event-stream")
+    resp.headers["Cache-Control"] = "no-cache, no-transform"
+    resp.headers["X-Accel-Buffering"] = "no"
+    resp.headers["Connection"] = "keep-alive"
+    return resp
+
+
 @app.route('/api/scrape/stream')
 def api_scrape_stream():
     """Server-Sent Events endpoint to stream live scraper progress."""
@@ -2217,7 +2258,7 @@ def api_scrape_stream():
                 break
             yield f"data: {json.dumps(item)}\n\n"
 
-    return Response(event_stream(), mimetype="text/event-stream")
+    return make_sse_response(event_stream())
 
 
 @app.route('/api/whatsapp/status')
@@ -2322,7 +2363,7 @@ def api_whatsapp_campaign_stream():
         except GeneratorExit:
             proc.terminate()
             
-    return Response(event_stream(), mimetype="text/event-stream")
+    return make_sse_response(event_stream())
 
 
 @app.route('/api/whatsapp/followup-queue')
@@ -2375,6 +2416,14 @@ def api_whatsapp_revive_lead():
 def api_whatsapp_pair_stream():
     """Server-Sent Events endpoint to stream real-time WhatsApp QR code to browser."""
     def event_stream():
+        global latest_pair_state
+        # Send initial SSE comment so proxy (Cloudflare/Nginx) flushes headers immediately
+        yield ": ping\n\n"
+        
+        # If a fresh QR code was generated within the last 35 seconds, yield immediately
+        if latest_pair_state.get("qrImage") and (time.time() - latest_pair_state.get("timestamp", 0) < 35):
+            yield f"data: {json.dumps({'type': 'qr', 'qrImage': latest_pair_state['qrImage'], 'message': 'Point your phone at the screen to scan this QR code'})}\n\n"
+
         cmd = ["node", "whatsapp_runner.js", "--pair"]
         proc = subprocess.Popen(cmd, cwd=BASE_DIR, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
         try:
@@ -2385,6 +2434,13 @@ def api_whatsapp_pair_stream():
                 if line.startswith("{") and line.endswith("}"):
                     try:
                         obj = json.loads(line)
+                        if obj.get("type") == "qr" and obj.get("qrImage"):
+                            latest_pair_state["qrImage"] = obj.get("qrImage")
+                            latest_pair_state["status"] = "qr"
+                            latest_pair_state["timestamp"] = time.time()
+                        elif obj.get("type") in ("authenticated", "ready"):
+                            latest_pair_state["status"] = obj.get("type")
+                            latest_pair_state["qrImage"] = None
                         yield f"data: {json.dumps(obj)}\n\n"
                     except Exception:
                         pass
@@ -2393,12 +2449,24 @@ def api_whatsapp_pair_stream():
         except GeneratorExit:
             proc.terminate()
 
-    return Response(event_stream(), mimetype="text/event-stream")
+    return make_sse_response(event_stream())
+
+
+@app.route('/api/whatsapp/pair/poll')
+def api_whatsapp_pair_poll():
+    """Poll endpoint as a backup if SSE is buffered by proxies or firewalls."""
+    return jsonify({
+        "status": latest_pair_state.get("status", "idle"),
+        "qrImage": latest_pair_state.get("qrImage"),
+        "hasQr": bool(latest_pair_state.get("qrImage"))
+    })
 
 
 @app.route('/api/whatsapp/logout', methods=['POST'])
 def api_whatsapp_logout():
     """Disconnects and removes saved WhatsApp session."""
+    global latest_pair_state
+    latest_pair_state = {"status": "idle", "qrImage": None, "timestamp": 0}
     try:
         cmd = ["node", "whatsapp_runner.js", "--logout"]
         proc = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=10)
@@ -2429,6 +2497,7 @@ def api_whatsapp_followup_stream():
     sender = request.args.get('sender', 'Deepaktusir')
 
     def event_stream():
+        yield ": ping\n\n"
         cmd = [
             "node", "whatsapp_runner.js", "--run-followup",
             batch, min_delay, max_delay, sender
@@ -2452,7 +2521,7 @@ def api_whatsapp_followup_stream():
         except GeneratorExit:
             proc.terminate()
 
-    return Response(event_stream(), mimetype="text/event-stream")
+    return make_sse_response(event_stream())
 
 
 @app.route('/download/<path:filename>')
