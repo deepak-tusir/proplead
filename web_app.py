@@ -40,6 +40,17 @@ DEAD_LEADS_FILE = os.path.join(BASE_DIR, "dead_leads.json")
 # In-memory pairing state for real-time streaming and proxy fallback polling
 latest_pair_state = {"status": "idle", "qrImage": None, "timestamp": 0}
 
+# In-memory scraper state for real-time streaming and proxy fallback polling
+active_scrape_state = {
+    "running": False,
+    "percent": 0,
+    "subtitle": "",
+    "logs": [],
+    "done": False,
+    "data": None,
+    "error": None
+}
+
 
 def get_local_ip():
     """Detect local LAN IP for sharing the link with others."""
@@ -1148,11 +1159,9 @@ HTML_TEMPLATE = """
                 crm: syncCrm ? '1' : '0'
             });
 
-            const eventSource = new EventSource(`/api/scrape/stream?${params.toString()}`);
+            let scrapePollInterval = null;
 
-            eventSource.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-
+            function handleScrapeData(data) {
                 if (data.type === 'log') {
                     appendLog('live-logs', data.message);
                 } else if (data.type === 'progress') {
@@ -1162,7 +1171,8 @@ HTML_TEMPLATE = """
                         document.getElementById('progress-sub').innerText = data.subtitle;
                     }
                 } else if (data.type === 'done') {
-                    eventSource.close();
+                    if (eventSource) { eventSource.close(); }
+                    if (scrapePollInterval) { clearInterval(scrapePollInterval); scrapePollInterval = null; }
                     document.getElementById('progress-bar').style.width = '100%';
                     document.getElementById('progress-percent').innerText = '100%';
                     document.getElementById('progress-sub').innerText = 'Completed!';
@@ -1179,18 +1189,54 @@ HTML_TEMPLATE = """
 
                     renderSessionTable(data.results);
                 } else if (data.type === 'error') {
-                    eventSource.close();
+                    if (eventSource) { eventSource.close(); }
+                    if (scrapePollInterval) { clearInterval(scrapePollInterval); scrapePollInterval = null; }
                     appendLog('live-logs', `[ERROR] ${data.message}`);
                     document.getElementById('start-btn').disabled = false;
                     document.getElementById('start-btn').classList.remove('opacity-50', 'cursor-not-allowed');
                 }
+            }
+
+            const eventSource = new EventSource(`/api/scrape/stream?${params.toString()}`);
+
+            eventSource.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    handleScrapeData(data);
+                } catch(err) {}
             };
 
             eventSource.onerror = function() {
-                eventSource.close();
-                document.getElementById('start-btn').disabled = false;
-                document.getElementById('start-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+                // Do not immediately close or freeze; hybrid polling will continue updating
+                console.log('Scraper stream blip, background polling active...');
             };
+
+            // Background fallback poll every 1.5s in case reverse proxy (Cloudflare) buffers SSE
+            scrapePollInterval = setInterval(() => {
+                fetch('/api/scrape/poll')
+                    .then(r => r.json())
+                    .then(state => {
+                        if (state.running) {
+                            if (state.percent) {
+                                document.getElementById('progress-bar').style.width = `${state.percent}%`;
+                                document.getElementById('progress-percent').innerText = `${state.percent}%`;
+                            }
+                            if (state.subtitle) {
+                                document.getElementById('progress-sub').innerText = state.subtitle;
+                            }
+                            if (state.logs && state.logs.length) {
+                                state.logs.forEach(log => appendLog('live-logs', log));
+                                state.logs = [];
+                            }
+                        }
+                        if (state.done && state.data) {
+                            handleScrapeData({ type: 'done', ...state.data });
+                        } else if (state.error) {
+                            handleScrapeData({ type: 'error', message: state.error });
+                        }
+                    })
+                    .catch(() => {});
+            }, 1500);
         }
 
         function renderSessionTable(results) {
@@ -2179,15 +2225,52 @@ def api_scrape_stream():
     target_query = f"{niche} in {city}"
 
     def event_stream():
+        global active_scrape_state
         msg_queue = queue.Queue()
+        
+        # Immediate keepalive & handshake chunk to bypass proxy buffering
+        yield ": ping\n\n"
+        yield f"data: {json.dumps({'type': 'progress', 'percent': 10, 'subtitle': f'Starting automated browser session for {target_query}...' })}\n\n"
+
+        active_scrape_state["running"] = True
+        active_scrape_state["percent"] = 10
+        active_scrape_state["subtitle"] = f"Starting automated browser session for '{target_query}'..."
+        active_scrape_state["logs"] = []
+        active_scrape_state["done"] = False
+        active_scrape_state["data"] = None
+        active_scrape_state["error"] = None
         
         def progress_cb(msg):
             msg_queue.put({"type": "log", "message": msg})
+            active_scrape_state["logs"].append(msg)
+            
+            # Smooth dynamic percentage parsing per lead
+            if "Scanning listings" in msg or "Waiting for results" in msg:
+                pct = 18
+                sub = "Scrolling Google Maps for listings..."
+                msg_queue.put({"type": "progress", "percent": pct, "subtitle": sub})
+                active_scrape_state["percent"] = pct
+                active_scrape_state["subtitle"] = sub
+            elif "Found " in msg and "business listings" in msg:
+                pct = 25
+                sub = msg
+                msg_queue.put({"type": "progress", "percent": pct, "subtitle": sub})
+                active_scrape_state["percent"] = pct
+                active_scrape_state["subtitle"] = sub
+            else:
+                m = re.search(r'\[(\d+)/(\d+)\]', msg)
+                if m:
+                    idx = int(m.group(1))
+                    tot = int(m.group(2))
+                    pct = min(84, int(25 + (idx / max(tot, 1)) * 58))
+                    sub = f"Extracting {idx} of {tot} leads..."
+                    msg_queue.put({"type": "progress", "percent": pct, "subtitle": sub})
+                    active_scrape_state["percent"] = pct
+                    active_scrape_state["subtitle"] = sub
             
         def run_scraper_thread():
+            global active_scrape_state
             try:
-                msg_queue.put({"type": "progress", "percent": 10, "subtitle": f"Launching automated browser session for '{target_query}'..."})
-                
                 # Run the async scraper
                 results = asyncio.run(scrape_property_dealers(
                     query=target_query,
@@ -2211,7 +2294,9 @@ def api_scrape_stream():
                         r["Category"] = niche
                     r["Search Query"] = target_query
                 
-                msg_queue.put({"type": "progress", "percent": 85, "subtitle": "Formatting and building Excel file..."})
+                msg_queue.put({"type": "progress", "percent": 88, "subtitle": "Formatting and building Excel file..."})
+                active_scrape_state["percent"] = 88
+                active_scrape_state["subtitle"] = "Formatting and building Excel file..."
                 
                 # Export to Excel & CSV
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -2237,15 +2322,23 @@ def api_scrape_stream():
                     "web": sum(1 for r in results if r.get("Website"))
                 }
                 
-                msg_queue.put({
+                done_payload = {
                     "type": "done",
                     "results": results,
                     "stats": stats,
                     "excel_file": excel_filename,
                     "csv_file": csv_filename
-                })
+                }
+                msg_queue.put(done_payload)
+                active_scrape_state["done"] = True
+                active_scrape_state["running"] = False
+                active_scrape_state["percent"] = 100
+                active_scrape_state["data"] = done_payload
             except Exception as e:
-                msg_queue.put({"type": "error", "message": str(e)})
+                err_msg = str(e)
+                msg_queue.put({"type": "error", "message": err_msg})
+                active_scrape_state["error"] = err_msg
+                active_scrape_state["running"] = False
             finally:
                 msg_queue.put(None)
                 
@@ -2259,6 +2352,12 @@ def api_scrape_stream():
             yield f"data: {json.dumps(item)}\n\n"
 
     return make_sse_response(event_stream())
+
+
+@app.route('/api/scrape/poll')
+def api_scrape_poll():
+    """Poll endpoint as a backup if SSE is buffered by proxies or firewalls."""
+    return jsonify(active_scrape_state)
 
 
 @app.route('/api/whatsapp/status')
