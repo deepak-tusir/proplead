@@ -55,6 +55,10 @@ wheels/
 .env.local
 .env.*.local
 
+# Tunnel binaries
+cloudflared.exe
+*.exe
+
 # Logs & Temporary files
 *.log
 *.tmp
