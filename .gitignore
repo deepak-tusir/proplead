@@ -59,6 +59,9 @@ wheels/
 cloudflared.exe
 *.exe
 
+# Master Architecture Blueprint (Internal Docs)
+PROJECT_MASTER_BLUEPRINT.md
+
 # Logs & Temporary files
 *.log
 *.tmp
